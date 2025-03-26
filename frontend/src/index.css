@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #ec4899; /* pink-500 */
+  --color-secondary: #3b82f6; /* blue-500 */
+  --color-accent: #9333ea; /* purple-600 */
+  --color-white-transparent-10: rgba(255, 255, 255, 0.1);
+  --color-white-transparent-20: rgba(255, 255, 255, 0.2);
+  --color-white-transparent-50: rgba(255, 255, 255, 0.5);
+  --color-white-transparent-80: rgba(255, 255, 255, 0.8);
+}
+
+@layer components {
+  .gradient-background {
+    @apply min-h-screen flex items-center justify-center;
+    background: linear-gradient(to bottom right, var(--color-primary), var(--color-secondary));
+  }
+
+  .glass-panel {
+    @apply w-full max-w-md p-8 rounded-3xl shadow-xl;
+    background: var(--color-white-transparent-20);
+    backdrop-filter: blur(8px);
+  }
+
+  .gradient-button {
+    @apply w-full py-3 px-4 rounded-lg text-white font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50 transition-all duration-200 ease-in-out;
+    background: linear-gradient(to right, var(--color-accent), var(--color-secondary));
+  }
+
+  .form-input {
+    @apply w-full px-4 py-3 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all;
+    background: var(--color-white-transparent-10);
+    border: 1px solid var(--color-white-transparent-20);
+  }
+
+  .text-heading {
+    @apply text-3xl font-semibold text-white mb-2;
+  }
+
+  .text-subheading {
+    @apply text-sm text-white/80 mb-8;
+  }
+
+  .text-label {
+    @apply block text-sm font-medium text-white mb-2;
+  }
+
+  .text-error {
+    @apply mb-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-white text-sm;
+  }
+
+  .text-footer {
+    @apply text-center text-sm text-white/80;
+  }
+
+  .text-link {
+    @apply text-white hover:opacity-80 transition-opacity;
+  }
+
+  .form-group {
+    @apply space-y-4;
+  }
+}
+
+body {
+  @apply bg-gray-50;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+} 
