@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
+import ThemeToggle from '../components/ThemeToggle'
 
 function Auth() {
   const [email, setEmail] = useState('')
@@ -39,6 +40,7 @@ function Auth() {
 
   return (
     <div className="gradient-background">
+      <ThemeToggle />
       <div className="glass-panel">
         <div className="text-center">
           <h2 className="text-heading">
@@ -56,7 +58,7 @@ function Auth() {
         )}
 
         <form onSubmit={handleSubmit} className="form-group">
-          <div>
+          <div className="form-field">
             <label htmlFor="email" className="text-label">
               Email
             </label>
@@ -83,9 +85,8 @@ function Auth() {
           </button>
 
           <p className="text-footer">
-            Don't have an account?{' '}
             <Link to="/signup" className="text-link">
-              Sign Up
+            Don't have an account?{' '}Sign Up
             </Link>
           </p>
         </form>

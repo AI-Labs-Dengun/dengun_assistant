@@ -1,156 +1,125 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { db } from '../firebase'
+import { db, storage } from '../firebase'
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import ThemeToggle from '../components/ThemeToggle'
+import PhotoUpload from '../components/PhotoUpload'
 
 function SignUp() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    company: ''
-  })
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [company, setCompany] = useState('')
+  const [error, setError] = useState('')
+  const [photo, setPhoto] = useState(null)
+  const [photoUrl, setPhotoUrl] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
+
+    if (!name || !email) {
+      setError('Name and email are required')
+      return
+    }
 
     try {
-      console.log('Checking if email exists:', formData.email)
       // Check if email already exists
-      const usersRef = collection(db, 'users')
-      const q = query(usersRef, where("email", "==", formData.email))
+      const q = query(collection(db, "users"), where("email", "==", email))
       const querySnapshot = await getDocs(q)
-
+      
       if (!querySnapshot.empty) {
-        setError('This email is already registered. Please sign in instead.')
-        setLoading(false)
+        setError('An account with this email already exists')
         return
       }
 
-      console.log('Creating new user document...')
-      // Add new user to Firestore
-      const userData = {
-        name: formData.name,
-        email: formData.email,
-        company: formData.company || null,
-        createdAt: new Date().toISOString()
-      }
-      console.log('User data to be stored:', userData)
-
-      const docRef = await addDoc(collection(db, 'users'), userData)
-      console.log('Document written with ID:', docRef.id)
-
-      // Store email in localStorage for session management
-      localStorage.setItem('userEmail', formData.email)
-      console.log('User email stored in localStorage')
+      let profilePhotoUrl = null;
       
-      navigate('/chat')
-    } catch (err) {
-      console.error('Detailed error during sign up:', {
-        message: err.message,
-        code: err.code,
-        stack: err.stack
+      // Upload photo if one was selected
+      if (photo) {
+        const storageRef = ref(storage, `profile-photos/${email}/${Date.now()}-${photo.name}`)
+        await uploadBytes(storageRef, photo)
+        profilePhotoUrl = await getDownloadURL(storageRef)
+      }
+
+      // Create new user
+      await addDoc(collection(db, "users"), {
+        name,
+        email,
+        company,
+        photoUrl: profilePhotoUrl,
+        createdAt: new Date().toISOString()
       })
-      setError(`Error creating account: ${err.message}`)
-    } finally {
-      setLoading(false)
+
+      navigate('/')
+    } catch (err) {
+      setError('Error creating account: ' + err.message)
     }
   }
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
+  const handlePhotoSelect = (file, previewUrl) => {
+    setPhoto(file)
+    setPhotoUrl(previewUrl)
   }
 
   return (
     <div className="gradient-background">
+      <ThemeToggle />
       <div className="glass-panel">
         <div className="text-center">
-          <h2 className="text-heading">
-            Create account
-          </h2>
-          <p className="text-subheading">
-            Fill in your details to get started
-          </p>
+          <h1 className="text-heading">Create Your Profile</h1>
+          <p className="text-subheading">Please fill in your details to get started</p>
         </div>
 
-        {error && (
-          <div className="text-error">
-            {error}
-          </div>
-        )}
+        <PhotoUpload onPhotoSelect={handlePhotoSelect} />
 
         <form onSubmit={handleSubmit} className="form-group">
-          <div>
-            <label htmlFor="name" className="text-label">
-              Full Name
-            </label>
+          <div className="form-field">
+            <label htmlFor="name" className="text-label">Name</label>
             <input
-              id="name"
-              name="name"
               type="text"
-              required
+              id="name"
               className="form-input"
               placeholder="John Doe"
-              value={formData.name}
-              onChange={handleChange}
-              disabled={loading}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
           </div>
 
-          <div>
-            <label htmlFor="email" className="text-label">
-              Email
-            </label>
+          <div className="form-field">
+            <label htmlFor="email" className="text-label">Email</label>
             <input
-              id="email"
-              name="email"
               type="email"
-              required
+              id="email"
               className="form-input"
               placeholder="john@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              disabled={loading}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
-          <div>
-            <label htmlFor="company" className="text-label">
-              Company <span className="text-white/50">(optional)</span>
-            </label>
+          <div className="form-field">
+            <label htmlFor="company" className="text-label">Company (Optional)</label>
             <input
-              id="company"
-              name="company"
               type="text"
+              id="company"
               className="form-input"
-              placeholder="Your company name"
-              value={formData.company}
-              onChange={handleChange}
-              disabled={loading}
+              placeholder="Enter your company name (optional)"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="gradient-button mt-6"
-          >
-            {loading ? 'Creating account...' : 'Create account'}
+          {error && <div className="text-error">{error}</div>}
+
+          <button type="submit" className="gradient-button">
+            Create Profile
           </button>
 
-          <p className="text-footer">
-            Already have an account?{' '}
-            <Link to="/" className="text-link">
-              Sign In
-            </Link>
-          </p>
+          <div className="text-footer">
+             <Link to="/" className="text-link">Already have an account? Sign In</Link>
+          </div>
         </form>
       </div>
     </div>

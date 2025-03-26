@@ -3,64 +3,357 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #ec4899; /* pink-500 */
-  --color-secondary: #3b82f6; /* blue-500 */
-  --color-accent: #9333ea; /* purple-600 */
+  /* Light theme colors */
+  --color-primary-light: #ec84c2;
+  --color-secondary-light: #86b2f6;
+  --color-tertiary-light: #c2dcff;
+  --color-bubble-light: rgba(134, 178, 246, 0.2);  /* Light blue bubble background */
+  --color-bubble-border-light: rgba(255, 255, 255, 0.2);  /* White border for light mode */
+  
+  /* Dark theme colors - using deeper, more saturated colors */
+  --color-primary-dark: #9032e7;
+  --color-secondary-dark: #5d1e90;
+  --color-tertiary-dark: #1b2456;
+  --color-bubble-dark: rgba(144, 50, 231, 0.2);  /* Purple bubble background */
+  --color-bubble-border-dark: rgba(144, 50, 231, 0.3);  /* Purple bubble border */
+
+  /* Default to light theme */
+  --color-primary: var(--color-primary-light);
+  --color-secondary: var(--color-secondary-light);
+  --color-tertiary: var(--color-tertiary-light);
+  --color-bubble: var(--color-bubble-light);
+  --color-bubble-border: var(--color-bubble-border-light);
+  
   --color-white-transparent-10: rgba(255, 255, 255, 0.1);
   --color-white-transparent-20: rgba(255, 255, 255, 0.2);
   --color-white-transparent-50: rgba(255, 255, 255, 0.5);
   --color-white-transparent-80: rgba(255, 255, 255, 0.8);
 }
 
+/* Dark theme class */
+:root[data-theme="dark"] {
+  --color-primary: var(--color-primary-dark);
+  --color-secondary: var(--color-secondary-dark);
+  --color-tertiary: var(--color-tertiary-dark);
+  --color-bubble: var(--color-bubble-dark);
+  --color-bubble-border: var(--color-bubble-border-dark);
+}
+
 @layer components {
   .gradient-background {
     @apply min-h-screen flex items-center justify-center;
-    background: linear-gradient(to bottom right, var(--color-primary), var(--color-secondary));
+    background: linear-gradient(to bottom right, var(--color-primary), var(--color-secondary), var(--color-tertiary));
   }
 
   .glass-panel {
-    @apply w-full max-w-md p-8 rounded-3xl shadow-xl;
-    background: var(--color-white-transparent-20);
-    backdrop-filter: blur(8px);
+    @apply w-full max-w-md p-8 rounded-2xl backdrop-blur-sm bg-white/10 shadow-xl;
   }
 
   .gradient-button {
-    @apply w-full py-3 px-4 rounded-lg text-white font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50 transition-all duration-200 ease-in-out;
-    background: linear-gradient(to right, var(--color-accent), var(--color-secondary));
+    @apply w-full py-3 px-4 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-lg font-semibold transition-all duration-200;
+    &:hover {
+      @apply transform scale-[1.02] opacity-95;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  .theme-toggle {
+    @apply fixed top-4 right-4 p-3 rounded-lg backdrop-blur-sm bg-white/20 shadow-lg cursor-pointer hover:bg-white/30 transition-all duration-200 border border-white/20;
   }
 
   .form-input {
-    @apply w-full px-4 py-3 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all;
-    background: var(--color-white-transparent-10);
-    border: 1px solid var(--color-white-transparent-20);
+    @apply w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/50 transition-colors duration-200;
   }
 
   .text-heading {
-    @apply text-3xl font-semibold text-white mb-2;
+    @apply text-3xl font-bold text-white mb-2;
   }
 
   .text-subheading {
-    @apply text-sm text-white/80 mb-8;
+    @apply text-lg text-white/80 mb-6;
   }
 
   .text-label {
-    @apply block text-sm font-medium text-white mb-2;
+    @apply block text-sm font-medium text-white mb-1;
   }
 
   .text-error {
-    @apply mb-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-white text-sm;
+    @apply mt-2 p-3 bg-red-500/20 border border-red-500/30 text-red-200 text-sm rounded-lg;
   }
 
   .text-footer {
-    @apply text-center text-sm text-white/80;
+    @apply text-center text-sm text-white/60 mt-6;
   }
 
   .text-link {
-    @apply text-white hover:opacity-80 transition-opacity;
+    @apply text-white hover:text-white/80 transition-colors duration-200;
   }
 
   .form-group {
-    @apply space-y-4;
+    @apply space-y-8;
+  }
+
+  .form-field {
+    @apply space-y-1;
+  }
+
+  .form-button {
+    @apply mt-8;
+  }
+
+  .chat-container {
+    @apply h-[90vh] w-full max-w-5xl mx-auto flex flex-col bg-transparent;
+  }
+
+  .chat-header {
+    @apply flex items-center justify-between p-4 backdrop-blur-md border-b border-white/10;
+  }
+
+  .chat-header-title {
+    @apply text-xl font-semibold text-white flex items-center gap-2;
+  }
+
+  .chat-messages {
+    @apply flex-1 overflow-y-auto p-6 space-y-6;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary) transparent;
+  }
+
+  .chat-messages::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  .chat-messages::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .chat-messages::-webkit-scrollbar-thumb {
+    @apply bg-white/20 rounded-full;
+  }
+
+  .message {
+    display: flex;
+    margin-bottom: 16px;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .message-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .user-message {
+    @apply flex-row-reverse;
+  }
+
+  .message-bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    max-width: 80%;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+  }
+
+  .user-message .message-bubble {
+    background: var(--color-bubble);
+    margin-left: auto;
+    border-top-right-radius: 4px;
+    border: 1px solid var(--color-bubble-border);
+  }
+
+  .assistant-message .message-bubble {
+    background: rgba(255, 255, 255, 0.02);
+    margin-right: auto;
+    border-top-left-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .message-content {
+    color: #fff;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .message-timestamp {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 6px;
+  }
+
+  .message-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+  }
+
+  .message:hover .message-actions {
+    opacity: 1;
+  }
+
+  .message-action-button {
+    padding: 4px;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.5);
+    transition: all 0.2s ease;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
+  .message-action-button:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .chat-input-container {
+    @apply p-4 backdrop-blur-md border-t border-white/10 mx-auto w-full max-w-3xl;
+  }
+
+  .chat-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 8px 12px;
+    width: 100%;
+  }
+
+  .chat-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 0.95rem;
+    outline: none;
+    padding: 0 8px;
+  }
+
+  .chat-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .chat-input-wrapper .message-action-button {
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.2s ease;
+  }
+
+  .chat-input-wrapper .message-action-button:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .send-button {
+    @apply p-2 rounded-full text-white/60 hover:text-white transition-all duration-200;
+    &:hover {
+      @apply bg-white/10 transform scale-[1.02];
+    }
+    &:disabled {
+      @apply opacity-50 cursor-not-allowed hover:bg-transparent hover:scale-100;
+    }
+  }
+
+  .typing-indicator {
+    @apply flex gap-1;
+  }
+
+  .typing-indicator span {
+    @apply w-2 h-2 bg-white/60 rounded-full animate-bounce;
+  }
+
+  .typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  .settings-overlay {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50;
+  }
+
+  .settings-panel {
+    @apply w-full max-w-md p-6 rounded-2xl shadow-xl;
+    background: linear-gradient(to bottom right, var(--color-primary), var(--color-secondary), var(--color-tertiary));
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.644);
+  }
+
+  .settings-header {
+    @apply flex items-center justify-between mb-6;
+  }
+
+  .settings-title {
+    @apply text-2xl font-bold text-white;
+  }
+
+  .settings-close {
+    @apply p-2 text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10;
+  }
+
+  .settings-section {
+    @apply mb-6;
+  }
+
+  .settings-section-title {
+    @apply text-lg font-semibold text-white mb-3;
+  }
+
+  .settings-options {
+    @apply space-y-2;
+  }
+
+  .settings-option {
+    @apply flex items-center gap-2 w-full p-3 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors;
+    &.selected {
+      @apply bg-white/20 font-medium;
+    }
+  }
+
+  .voice-options {
+    @apply space-y-2;
+  }
+
+  .voice-option {
+    @apply flex items-center gap-3 w-full p-3 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer;
+  }
+
+  .voice-option input[type="radio"] {
+    @apply w-4 h-4 accent-white;
+  }
+
+  .voice-name {
+    @apply text-sm font-medium;
+  }
+
+  .settings-logout {
+    @apply flex items-center justify-center gap-2 w-full p-3 mt-6 rounded-lg transition-all duration-200 text-white;
+    background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+    &:hover {
+      @apply transform scale-[1.02] opacity-95;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  .settings-button {
+    @apply p-2 text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10 ml-auto;
   }
 }
 
