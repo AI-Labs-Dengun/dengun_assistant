@@ -12,5 +12,11 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
+  },
+  assetsInclude: ['**/*.txt'],
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
   }
 }) 

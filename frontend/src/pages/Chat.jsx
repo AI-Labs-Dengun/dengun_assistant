@@ -10,6 +10,8 @@ import LoadingScreen from '../components/LoadingScreen';
 import VoiceInteractionPopup from '../components/VoiceInteractionPopup';
 import robotIcon from '../assets/robot.png';
 import userIcon from '../assets/user.png';
+import aiInstructions from '../../../instructions/instructions-general.txt';
+import aiKnowledge from '../../../knowledge/knowledge-general.txt';
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
@@ -46,6 +48,8 @@ function Chat() {
   const currentAudioRef = useRef(null);
   const audioStartTimeRef = useRef(0);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const [instructions, setInstructions] = useState('');
+  const [knowledge, setKnowledge] = useState('');
 
   useEffect(() => {
     // Apply theme on component mount and when theme changes
@@ -74,7 +78,7 @@ function Chat() {
       const savedVoice = localStorage.getItem('selectedVoice') || 'alloy';
       setSelectedVoice(savedVoice);
 
-      // Initialize MediaRecorder
+      // Initialize MediaRecorder permissions but don't start recording
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioStreamRef.current = stream;
@@ -131,7 +135,7 @@ function Chat() {
                 messages: [
                   {
                     role: "system",
-                    content: `You are a helpful AI assistant. Always respond in ${userLanguage} language only.`
+                    content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}`
                   },
                   ...messages.concat(userMessage).map(msg => ({
                     role: msg.role,
@@ -198,7 +202,6 @@ function Chat() {
 
       } catch (error) {
         console.error('Error accessing microphone:', error);
-        alert('Failed to access microphone. Please ensure you have granted microphone permissions.');
       }
 
       // Detect browser language
@@ -206,13 +209,31 @@ function Chat() {
       const langCode = browserLang.split('-')[0];
       setUserLanguage(langCode);
 
-      // Add initial welcome message in detected language
-      const welcomeMessage = await getLocalizedWelcomeMessage(langCode);
-      setMessages([{
-        role: 'assistant',
-        content: welcomeMessage,
-        timestamp: new Date()
-      }]);
+      // Wait for instructions to load before showing welcome message
+      try {
+        const [instructionsResponse, knowledgeResponse] = await Promise.all([
+          fetch(aiInstructions),
+          fetch(aiKnowledge)
+        ]);
+        
+        const [instructionsText, knowledgeText] = await Promise.all([
+          instructionsResponse.text(),
+          knowledgeResponse.text()
+        ]);
+
+        setInstructions(instructionsText);
+        setKnowledge(knowledgeText);
+
+        // Add initial welcome message using instructions
+        const welcomeMessage = await getLocalizedWelcomeMessage(langCode, instructionsText);
+        setMessages([{
+          role: 'assistant',
+          content: welcomeMessage,
+          timestamp: new Date()
+        }]);
+      } catch (error) {
+        console.error('Error loading AI files:', error);
+      }
 
       setIsInitializing(false);
     };
@@ -230,14 +251,14 @@ function Chat() {
     };
   }, [navigate]);
 
-  const getLocalizedWelcomeMessage = async (langCode) => {
+  const getLocalizedWelcomeMessage = async (langCode, instructions) => {
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4",
         messages: [
           {
             role: "system",
-            content: `You are a friendly AI assistant. Respond in ${langCode} language only. Keep the response short and welcoming.`
+            content: `Instructions: ${instructions}\nLanguage: ${langCode}`
           },
           {
             role: "user",
@@ -282,7 +303,7 @@ function Chat() {
         messages: [
           {
             role: "system",
-            content: `You are a helpful AI assistant. Always respond in ${userLanguage} language only.`
+            content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}`
           },
           ...messages.concat(userMessage).map(msg => ({
             role: msg.role,
@@ -300,42 +321,6 @@ function Chat() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-      
-      // Set AI speaking state and play the response
-      setIsPlayingLastMessage(true);
-      setIsPaused(false);
-      setIsVoicePopupOpen(true);
-
-      try {
-        const audioResponse = await openai.audio.speech.create({
-          model: "tts-1",
-          voice: selectedVoice,
-          input: assistantMessage.content
-        });
-
-        const audioData = await audioResponse.blob();
-        const url = URL.createObjectURL(audioData);
-        const audio = new Audio(url);
-        currentAudioRef.current = audio;
-        
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-          setIsPlayingLastMessage(false);
-          setIsPaused(false);
-        };
-
-        audio.play().catch((error) => {
-          console.error('Error playing audio:', error);
-          setIsPlayingLastMessage(false);
-          setIsPaused(false);
-        });
-
-      } catch (error) {
-        console.error('Error playing AI response:', error);
-        setIsPlayingLastMessage(false);
-        setIsPaused(false);
-      }
-
       return assistantMessage;
     } catch (error) {
       console.error('Error:', error);
@@ -592,14 +577,16 @@ function Chat() {
         const audio = new Audio(url);
         currentAudioRef.current = audio;
         
-        await new Promise((resolve) => {
-          audio.onended = () => {
-            URL.revokeObjectURL(url);
-            setIsPlayingLastMessage(false);
-            setIsPaused(false);
-            resolve();
-          };
-          audio.play();
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+          setIsPlayingLastMessage(false);
+          setIsPaused(false);
+        };
+
+        audio.play().catch((error) => {
+          console.error('Error playing audio:', error);
+          setIsPlayingLastMessage(false);
+          setIsPaused(false);
         });
       } catch (error) {
         console.error('Error playing last message:', error);
