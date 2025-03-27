@@ -206,18 +206,27 @@
   }
 
   .message-action-button {
+    background: none;
+    border: none;
     padding: 4px;
-    border-radius: 4px;
+    cursor: pointer;
     color: rgba(255, 255, 255, 0.5);
     transition: all 0.2s ease;
-    background: transparent;
-    border: none;
-    cursor: pointer;
+    border-radius: 4px;
   }
 
   .message-action-button:hover {
     color: rgba(255, 255, 255, 0.9);
     background: rgba(255, 255, 255, 0.1);
+  }
+
+  .message-action-button.active {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .message-action-button.active:hover {
+    background: rgba(255, 255, 255, 0.15);
   }
 
   .chat-input-container {
@@ -354,6 +363,167 @@
 
   .settings-button {
     @apply p-2 text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10 ml-auto;
+  }
+
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50;
+  }
+
+  .modal-content {
+    @apply w-full max-w-md p-6 rounded-2xl shadow-xl;
+    background: linear-gradient(to bottom right, var(--color-primary), var(--color-secondary), var(--color-tertiary));
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.644);
+  }
+
+  .modal-header {
+    @apply flex items-center justify-between mb-4;
+  }
+
+  .modal-header h3 {
+    @apply text-xl font-semibold text-white;
+  }
+
+  .modal-close {
+    @apply p-2 text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10;
+  }
+
+  .modal-body {
+    @apply space-y-4;
+  }
+
+  .message-preview {
+    @apply p-4 bg-white/10 rounded-lg text-white/90 text-sm;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .comment-input {
+    @apply w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/50 transition-colors duration-200 resize-none;
+  }
+
+  .modal-actions {
+    @apply flex justify-end gap-3;
+  }
+
+  .cancel-button {
+    @apply px-4 py-2 text-white/80 hover:text-white transition-colors;
+  }
+
+  .submit-button {
+    @apply px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .emoji-picker-container {
+    position: relative;
+  }
+
+  .emoji-picker-popup {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 10px;
+    z-index: 1000;
+    background: rgba(17, 24, 39, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .emoji-picker-popup .EmojiPickerReact {
+    --epr-bg-color: transparent !important;
+    --epr-category-label-bg-color: transparent !important;
+    --epr-category-label-text-color: #fff !important;
+    --epr-focus-bg-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .loading-container {
+    @apply w-full max-w-md p-8 rounded-2xl backdrop-blur-sm bg-white/10 shadow-xl flex items-center justify-center;
+  }
+
+  .loading-content {
+    @apply flex flex-col items-center gap-4;
+  }
+
+  .loading-spinner {
+    @apply w-12 h-12 text-white;
+  }
+
+  .loading-text {
+    @apply text-white text-lg font-medium;
+  }
+
+  .voice-interaction-popup {
+    @apply w-full max-w-md p-6 rounded-2xl shadow-xl;
+    background: linear-gradient(to bottom right, var(--color-primary), var(--color-secondary), var(--color-tertiary));
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.644);
+  }
+
+  .voice-status-container {
+    @apply space-y-6 mt-6 mb-8;
+  }
+
+  .voice-status {
+    @apply flex items-center gap-4 p-4 rounded-lg bg-white/10 border border-white/20 transition-all duration-200;
+  }
+
+  .voice-status.active {
+    @apply bg-white/20 border-white/40;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+  }
+
+  .voice-status-icon {
+    @apply w-12 h-12 flex items-center justify-center rounded-full bg-white/10 text-white;
+  }
+
+  .voice-status-text {
+    @apply flex-1;
+  }
+
+  .voice-status-text h4 {
+    @apply text-white font-medium mb-1;
+  }
+
+  .voice-status-text p {
+    @apply text-white/70 text-sm;
+  }
+
+  .stop-button {
+    @apply px-4 py-2 bg-red-500/20 text-red-200 rounded-lg hover:bg-red-500/30 transition-colors;
+    border: 1px solid rgba(255, 0, 0, 0.2);
+  }
+
+  .stop-button:hover {
+    border-color: rgba(255, 0, 0, 0.3);
+  }
+
+  .voice-control-container {
+    @apply flex justify-center mt-6;
+  }
+
+  .voice-control-button {
+    @apply w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .voice-control-button svg {
+    @apply w-8 h-8 text-white;
+  }
+
+  .voice-control-button:hover {
+    @apply transform scale-105;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .voice-control-button.active {
+    @apply bg-red-500/20 border-2 border-red-500/30;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+  }
+
+  .voice-control-button.active:hover {
+    @apply bg-red-500/30;
   }
 }
 

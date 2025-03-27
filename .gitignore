@@ -2,13 +2,35 @@
 node_modules/
 /.pnp
 .pnp.js
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+pip-log.txt
+pip-delete-this-directory.txt
 
 # Testing
 /coverage
+.pytest_cache/
+htmlcov/
 
 # Production
 /build
 /dist
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+bin/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+*.egg
 
 # Environment files
 .env
@@ -16,11 +38,16 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
+!.env.example
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
+logs/
+*.log.*
 
 # Editor directories and files
 .idea/
@@ -29,6 +56,8 @@ yarn-error.log*
 *.swo
 .DS_Store
 Thumbs.db
+*.sublime-workspace
+*.sublime-project
 
 # Firebase
 .firebase/
@@ -38,4 +67,40 @@ firebase-debug.*.log*
 # Cache
 .cache/
 .npm/
-.eslintcache 
+.eslintcache
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE specific files
+.idea/
+*.iml
+*.iws
+.idea_modules/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Local development
+*.local
+local_settings.py
+db.sqlite3
+db.sqlite3-journal 
