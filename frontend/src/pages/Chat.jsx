@@ -45,6 +45,21 @@ function Chat() {
   const [isVoicePopupOpen, setIsVoicePopupOpen] = useState(false);
   const currentAudioRef = useRef(null);
   const audioStartTimeRef = useRef(0);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  useEffect(() => {
+    // Apply theme on component mount and when theme changes
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
+  }, [theme]);
+
+  const handleThemeChange = (newTheme) => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    // Apply theme immediately
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(newTheme);
+  };
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -138,6 +153,7 @@ function Chat() {
 
               // Set AI speaking state and play the response
               setIsPlayingLastMessage(true);
+              setIsPaused(false);
               try {
                 const response = await openai.audio.speech.create({
                   model: "tts-1",
@@ -150,15 +166,18 @@ function Chat() {
                 const audio = new Audio(url);
                 currentAudioRef.current = audio;
                 
-                await new Promise((resolve) => {
-                  audio.onended = () => {
-                    URL.revokeObjectURL(url);
-                    setIsPlayingLastMessage(false);
-                    setIsPaused(false);
-                    resolve();
-                  };
-                  audio.play();
+                audio.onended = () => {
+                  URL.revokeObjectURL(url);
+                  setIsPlayingLastMessage(false);
+                  setIsPaused(false);
+                };
+
+                audio.play().catch((error) => {
+                  console.error('Error playing audio:', error);
+                  setIsPlayingLastMessage(false);
+                  setIsPaused(false);
                 });
+
               } catch (error) {
                 console.error('Error playing AI response:', error);
                 setIsPlayingLastMessage(false);
@@ -281,7 +300,43 @@ function Chat() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-      return assistantMessage; // Return the message so we can play it
+      
+      // Set AI speaking state and play the response
+      setIsPlayingLastMessage(true);
+      setIsPaused(false);
+      setIsVoicePopupOpen(true);
+
+      try {
+        const audioResponse = await openai.audio.speech.create({
+          model: "tts-1",
+          voice: selectedVoice,
+          input: assistantMessage.content
+        });
+
+        const audioData = await audioResponse.blob();
+        const url = URL.createObjectURL(audioData);
+        const audio = new Audio(url);
+        currentAudioRef.current = audio;
+        
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+          setIsPlayingLastMessage(false);
+          setIsPaused(false);
+        };
+
+        audio.play().catch((error) => {
+          console.error('Error playing audio:', error);
+          setIsPlayingLastMessage(false);
+          setIsPaused(false);
+        });
+
+      } catch (error) {
+        console.error('Error playing AI response:', error);
+        setIsPlayingLastMessage(false);
+        setIsPaused(false);
+      }
+
+      return assistantMessage;
     } catch (error) {
       console.error('Error:', error);
       const errorMessage = {
@@ -590,9 +645,19 @@ function Chat() {
   };
 
   const handleCloseVoicePopup = async () => {
+    // Stop recording if active
     if (isRecording) {
       await stopRecording();
     }
+    
+    // Stop AI speech if playing
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      setIsPlayingLastMessage(false);
+      setIsPaused(false);
+    }
+    
     setIsVoicePopupOpen(false);
   };
 
@@ -730,9 +795,7 @@ function Chat() {
       <Settings 
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        onThemeChange={(theme) => {
-          // You can add any additional theme change handling here
-        }}
+        onThemeChange={handleThemeChange}
         onVoiceChange={handleVoiceChange}
         selectedVoice={selectedVoice}
       />

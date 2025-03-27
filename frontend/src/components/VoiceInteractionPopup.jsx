@@ -21,12 +21,12 @@ const VoiceInteractionPopup = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+      <div className="glass-panel rounded-lg p-6 max-w-md w-full mx-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Voice Chat</h2>
+          <h2 className="text-xl font-semibold text-white">Voice Chat</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="text-gray-300 hover:text-white"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/>
@@ -39,9 +39,9 @@ const VoiceInteractionPopup = ({
           {/* Status Icon */}
           <div className="relative">
             <div className={`w-24 h-24 rounded-full flex items-center justify-center overflow-hidden
-              ${isAISpeaking ? 'bg-blue-100 dark:bg-blue-900' : 
-                isRecording ? 'bg-red-100 dark:bg-red-900' : 
-                'bg-gray-100 dark:bg-gray-700'}`}>
+              ${isAISpeaking ? 'bg-blue-500/20' : 
+                isRecording ? 'bg-red-500/20' : 
+                'bg-gray-500/20'}`}>
               {isAISpeaking ? (
                 <img 
                   src={robot2Icon} 
@@ -49,7 +49,7 @@ const VoiceInteractionPopup = ({
                   className="w-full h-full object-contain p-4"
                 />
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600 dark:text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                   <circle cx="12" cy="7" r="4"/>
                 </svg>
@@ -63,13 +63,13 @@ const VoiceInteractionPopup = ({
 
           {/* Status Text */}
           <div className="text-center">
-            <p className="text-lg font-medium text-gray-900 dark:text-white">
+            <p className="text-lg font-medium text-white">
               {isAISpeaking ? (isPaused ? 'AI Assistant Paused' : 'AI Assistant Speaking') :
                isRecording ? 'Recording Your Voice' :
                isTranscribing ? 'Processing Your Message' :
                'Ready to Record'}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-gray-300 mt-1">
               {isAISpeaking ? (isPaused ? 'Click play to continue' : 'Click stop to pause') :
                isRecording ? 'Click stop to end recording' :
                isTranscribing ? 'Please wait while we process your message' :

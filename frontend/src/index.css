@@ -31,7 +31,7 @@
 }
 
 /* Dark theme class */
-:root[data-theme="dark"] {
+.dark {
   --color-primary: var(--color-primary-dark);
   --color-secondary: var(--color-secondary-dark);
   --color-tertiary: var(--color-tertiary-dark);
@@ -465,16 +465,20 @@
   }
 
   .voice-status {
-    @apply flex items-center gap-4 p-4 rounded-lg bg-white/10 border border-white/20 transition-all duration-200;
+    @apply flex items-center gap-4 p-4 rounded-lg transition-all duration-200;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .voice-status.active {
-    @apply bg-white/20 border-white/40;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.4);
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
   }
 
   .voice-status-icon {
-    @apply w-12 h-12 flex items-center justify-center rounded-full bg-white/10 text-white;
+    @apply w-12 h-12 flex items-center justify-center rounded-full text-white;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
   }
 
   .voice-status-text {

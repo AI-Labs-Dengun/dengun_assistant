@@ -3,6 +3,8 @@ import React from 'react';
 function Settings({ isOpen, onClose, onThemeChange, onVoiceChange, selectedVoice }) {
   if (!isOpen) return null;
 
+  const currentTheme = localStorage.getItem('theme') || 'light';
+
   const handleLogout = () => {
     localStorage.removeItem('userEmail');
     window.location.href = '/';
@@ -25,13 +27,13 @@ function Settings({ isOpen, onClose, onThemeChange, onVoiceChange, selectedVoice
           <h3 className="settings-section-title">Theme</h3>
           <div className="settings-options">
             <button
-              className={`settings-option ${localStorage.getItem('theme') === 'light' ? 'selected' : ''}`}
+              className={`settings-option ${currentTheme === 'light' ? 'selected' : ''}`}
               onClick={() => onThemeChange('light')}
             >
               Light
             </button>
             <button
-              className={`settings-option ${localStorage.getItem('theme') === 'dark' ? 'selected' : ''}`}
+              className={`settings-option ${currentTheme === 'dark' ? 'selected' : ''}`}
               onClick={() => onThemeChange('dark')}
             >
               Dark
