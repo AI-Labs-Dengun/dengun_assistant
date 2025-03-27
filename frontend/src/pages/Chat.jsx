@@ -37,12 +37,14 @@ function Chat() {
   const [selectedVoice, setSelectedVoice] = useState('alloy');
   const [isRecording, setIsRecording] = useState(false);
   const [isPlayingLastMessage, setIsPlayingLastMessage] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const audioStreamRef = useRef(null);
   const [isVoicePopupOpen, setIsVoicePopupOpen] = useState(false);
   const currentAudioRef = useRef(null);
+  const audioStartTimeRef = useRef(0);
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -152,6 +154,7 @@ function Chat() {
                   audio.onended = () => {
                     URL.revokeObjectURL(url);
                     setIsPlayingLastMessage(false);
+                    setIsPaused(false);
                     resolve();
                   };
                   audio.play();
@@ -159,6 +162,7 @@ function Chat() {
               } catch (error) {
                 console.error('Error playing AI response:', error);
                 setIsPlayingLastMessage(false);
+                setIsPaused(false);
               }
             }
           } catch (error) {
@@ -489,6 +493,21 @@ function Chat() {
     }
   }, [isLoading, messages]);
 
+  const handleSkip = () => {
+    if (currentAudioRef?.current) {
+      if (currentAudioRef.current.paused) {
+        // Resume playback
+        currentAudioRef.current.play();
+        setIsPaused(false);
+      } else {
+        // Pause playback
+        currentAudioRef.current.pause();
+        audioStartTimeRef.current = currentAudioRef.current.currentTime;
+        setIsPaused(true);
+      }
+    }
+  };
+
   const handleMicClick = async () => {
     if (!mediaRecorderRef.current) {
       alert('Audio recording is not supported in your browser.');
@@ -522,6 +541,7 @@ function Chat() {
           audio.onended = () => {
             URL.revokeObjectURL(url);
             setIsPlayingLastMessage(false);
+            setIsPaused(false);
             resolve();
           };
           audio.play();
@@ -529,9 +549,11 @@ function Chat() {
       } catch (error) {
         console.error('Error playing last message:', error);
         setIsPlayingLastMessage(false);
+        setIsPaused(false);
       }
     } else {
       setIsPlayingLastMessage(false);
+      setIsPaused(false);
     }
   };
 
@@ -732,6 +754,8 @@ function Chat() {
         onStopRecording={stopRecording}
         onStartRecording={handleStartRecording}
         currentAudioRef={currentAudioRef}
+        isPaused={isPaused}
+        onSkip={handleSkip}
       />
     </div>
   );

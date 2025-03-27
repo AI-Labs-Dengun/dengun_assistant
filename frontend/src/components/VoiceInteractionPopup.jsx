@@ -9,18 +9,11 @@ const VoiceInteractionPopup = ({
   isTranscribing,
   onStopRecording,
   onStartRecording,
-  currentAudioRef
+  currentAudioRef,
+  isPaused,
+  onSkip
 }) => {
   if (!isOpen) return null;
-
-  const handleSkip = () => {
-    // Stop any ongoing speech
-    window.speechSynthesis.cancel();
-    if (currentAudioRef?.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-    }
-  };
 
   // Determine who is currently active
   const isAISpeaking = isPlayingLastMessage;
@@ -71,13 +64,13 @@ const VoiceInteractionPopup = ({
           {/* Status Text */}
           <div className="text-center">
             <p className="text-lg font-medium text-gray-900 dark:text-white">
-              {isAISpeaking ? 'AI Assistant Speaking' :
+              {isAISpeaking ? (isPaused ? 'AI Assistant Paused' : 'AI Assistant Speaking') :
                isRecording ? 'Recording Your Voice' :
                isTranscribing ? 'Processing Your Message' :
                'Ready to Record'}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {isAISpeaking ? 'Click stop to stop AI' :
+              {isAISpeaking ? (isPaused ? 'Click play to continue' : 'Click stop to pause') :
                isRecording ? 'Click stop to end recording' :
                isTranscribing ? 'Please wait while we process your message' :
                'Click record to start speaking'}
@@ -86,7 +79,7 @@ const VoiceInteractionPopup = ({
 
           {/* Action Button */}
           <button
-            onClick={isAISpeaking ? handleSkip : (isRecording ? onStopRecording : onStartRecording)}
+            onClick={isAISpeaking ? onSkip : (isRecording ? onStopRecording : onStartRecording)}
             disabled={isTranscribing}
             className={`w-16 h-16 rounded-full flex items-center justify-center transition-colors
               ${isAISpeaking || isRecording
@@ -94,9 +87,13 @@ const VoiceInteractionPopup = ({
                 : 'bg-green-500 hover:bg-green-600'
               } ${isTranscribing ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {(isAISpeaking || isRecording) ? (
+            {(isAISpeaking && !isPaused) || isRecording ? (
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="6" y="6" width="12" height="12"/>
+              </svg>
+            ) : isAISpeaking && isPaused ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"/>
               </svg>
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
