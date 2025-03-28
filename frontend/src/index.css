@@ -30,6 +30,15 @@
   --color-white-transparent-80: rgba(255, 255, 255, 0.8);
 }
 
+/* Light theme class */
+.light {
+  --color-primary: var(--color-primary-light);
+  --color-secondary: var(--color-secondary-light);
+  --color-tertiary: var(--color-tertiary-light);
+  --color-bubble: var(--color-bubble-light);
+  --color-bubble-border: var(--color-bubble-border-light);
+}
+
 /* Dark theme class */
 .dark {
   --color-primary: var(--color-primary-dark);

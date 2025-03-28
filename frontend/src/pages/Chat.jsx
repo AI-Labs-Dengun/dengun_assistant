@@ -129,13 +129,13 @@ function Chat() {
               };
               setMessages(prev => [...prev, userMessage]);
 
-              // Get AI response
+              // Get AI response in the same language as the user's message
               const aiResponse = await openai.chat.completions.create({
                 model: "gpt-4",
                 messages: [
                   {
                     role: "system",
-                    content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}`
+                    content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}\nImportant: Respond in the same language as the user's message (${userLanguage}). If the user writes in Portuguese, respond in Portuguese.`
                   },
                   ...messages.concat(userMessage).map(msg => ({
                     role: msg.role,
@@ -204,10 +204,25 @@ function Chat() {
         console.error('Error accessing microphone:', error);
       }
 
-      // Detect browser language
+      // Detect browser language and set it as the user's language
       const browserLang = navigator.language || navigator.userLanguage;
       const langCode = browserLang.split('-')[0];
-      setUserLanguage(langCode);
+      // Map language codes to supported languages
+      const languageMap = {
+        'pt': 'pt',
+        'en': 'en',
+        'es': 'es',
+        'fr': 'fr',
+        'de': 'de',
+        'it': 'it',
+        'ja': 'ja',
+        'ko': 'ko',
+        'zh': 'zh',
+        'ru': 'ru'
+      };
+      const detectedLanguage = languageMap[langCode] || 'en';
+      setUserLanguage(detectedLanguage);
+      console.log('Detected language:', detectedLanguage);
 
       // Wait for instructions to load before showing welcome message
       try {
@@ -225,7 +240,7 @@ function Chat() {
         setKnowledge(knowledgeText);
 
         // Add initial welcome message using instructions
-        const welcomeMessage = await getLocalizedWelcomeMessage(langCode, instructionsText);
+        const welcomeMessage = await getLocalizedWelcomeMessage(detectedLanguage, instructionsText);
         setMessages([{
           role: 'assistant',
           content: welcomeMessage,
@@ -258,11 +273,11 @@ function Chat() {
         messages: [
           {
             role: "system",
-            content: `Instructions: ${instructions}\nLanguage: ${langCode}`
+            content: `Instructions: ${instructions}\nLanguage: ${langCode}\nImportant: Respond in the same language as specified (${langCode}). If the language is Portuguese (pt), respond in Portuguese.`
           },
           {
             role: "user",
-            content: "Say hello and welcome the user to the chat."
+            content: "Say hello and welcome the user to the chat in their language."
           }
         ],
         temperature: 0.7,
@@ -271,7 +286,20 @@ function Chat() {
       return response.choices[0].message.content;
     } catch (error) {
       console.error('Error getting localized welcome message:', error);
-      return 'Hello! Welcome to the chat.';
+      // Fallback messages in different languages
+      const fallbackMessages = {
+        'pt': 'Olá! Bem-vindo ao chat.',
+        'en': 'Hello! Welcome to the chat.',
+        'es': '¡Hola! Bienvenido al chat.',
+        'fr': 'Bonjour! Bienvenue dans le chat.',
+        'de': 'Hallo! Willkommen im Chat.',
+        'it': 'Ciao! Benvenuto nella chat.',
+        'ja': 'こんにちは！チャットへようこそ。',
+        'ko': '안녕하세요! 채팅에 오신 것을 환영합니다.',
+        'zh': '你好！欢迎来到聊天。',
+        'ru': 'Привет! Добро пожаловать в чат.'
+      };
+      return fallbackMessages[langCode] || 'Hello! Welcome to the chat.';
     }
   };
 
