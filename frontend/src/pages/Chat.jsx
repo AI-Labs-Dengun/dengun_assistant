@@ -78,10 +78,26 @@ function Chat() {
       const savedVoice = localStorage.getItem('selectedVoice') || 'alloy';
       setSelectedVoice(savedVoice);
 
-      // Initialize MediaRecorder permissions but don't start recording
+      // Check for secure context and proper API support
       try {
+        // Check if we're in a secure context
+        if (!window.isSecureContext) {
+          throw new Error('Microphone access requires a secure context (HTTPS or localhost)');
+        }
+
+        // Check if mediaDevices API is supported
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('Media devices API is not supported in this browser');
+        }
+
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioStreamRef.current = stream;
+
+        // Check if MediaRecorder is supported
+        if (typeof MediaRecorder === 'undefined') {
+          throw new Error('MediaRecorder is not supported in this browser');
+        }
+
         const mediaRecorder = new MediaRecorder(stream);
         mediaRecorderRef.current = mediaRecorder;
         
@@ -577,9 +593,40 @@ function Chat() {
   };
 
   const handleMicClick = async () => {
-    if (!mediaRecorderRef.current) {
-      alert('Audio recording is not supported in your browser.');
+    // Check for secure context first
+    if (!window.isSecureContext) {
+      alert('Microphone access requires a secure connection (HTTPS). Please use HTTPS or localhost.');
       return;
+    }
+
+    // Check for browser support
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('Your browser does not support microphone access. Please try using a modern browser like Chrome, Firefox, or Safari.');
+      return;
+    }
+
+    // Check if MediaRecorder is available
+    if (typeof MediaRecorder === 'undefined') {
+      alert('Your browser does not support audio recording. Please try using a modern browser.');
+      return;
+    }
+
+    // Check if we have an existing mediaRecorder
+    if (!mediaRecorderRef.current) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioStreamRef.current = stream;
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunksRef.current.push(event.data);
+        };
+      } catch (error) {
+        console.error('Error initializing microphone:', error);
+        alert('Failed to access microphone. Please make sure you have granted microphone permissions and are using HTTPS.');
+        return;
+      }
     }
 
     setIsVoicePopupOpen(true);
