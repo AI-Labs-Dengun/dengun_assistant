@@ -8,6 +8,7 @@ import Settings from '../components/Settings';
 import CommentModal from '../components/CommentModal';
 import LoadingScreen from '../components/LoadingScreen';
 import VoiceInteractionPopup from '../components/VoiceInteractionPopup';
+import { useTranslation } from '../hooks/useTranslation';
 import robotIcon from '../assets/robot.png';
 import userIcon from '../assets/user.png';
 import aiInstructions from '../../../instructions/instructions-general.txt';
@@ -20,6 +21,7 @@ const openai = new OpenAI({
 
 function Chat() {
   const navigate = useNavigate();
+  const { t, currentLanguage } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -206,7 +208,7 @@ function Chat() {
             }
           } catch (error) {
             console.error('Error transcribing audio:', error);
-            alert('Failed to transcribe audio. Please try again.');
+            alert(t('errorTranscribeAudio'));
           } finally {
             setIsTranscribing(false);
           }
@@ -225,16 +227,16 @@ function Chat() {
       const langCode = browserLang.split('-')[0];
       // Map language codes to supported languages
       const languageMap = {
-        'pt': 'pt',
-        'en': 'en',
-        'es': 'es',
-        'fr': 'fr',
-        'de': 'de',
-        'it': 'it',
-        'ja': 'ja',
-        'ko': 'ko',
-        'zh': 'zh',
-        'ru': 'ru'
+        'en': 'en', // English
+        'es': 'es', // Spanish
+        'pt': 'pt', // Portuguese
+        'fr': 'fr', // French
+        'de': 'de', // German
+        'it': 'it', // Italian
+        'zh': 'zh', // Chinese
+        'hi': 'hi', // Hindi
+        'ru': 'ru', // Russian
+        'ja': 'ja'  // Japanese
       };
       const detectedLanguage = languageMap[langCode] || 'en';
       setUserLanguage(detectedLanguage);
@@ -289,11 +291,11 @@ function Chat() {
         messages: [
           {
             role: "system",
-            content: `Instructions: ${instructions}\nLanguage: ${langCode}\nImportant: Respond in the same language as specified (${langCode}). If the language is Portuguese (pt), respond in Portuguese.`
+            content: `Instructions: ${instructions}\nLanguage: ${langCode}\nImportant: Respond in the same language as the user's language (${langCode}). If the user's language is Portuguese, respond in Portuguese.`
           },
           {
             role: "user",
-            content: "Say hello and welcome the user to the chat in their language."
+            content: "Say hello and welcome the user to the chat."
           }
         ],
         temperature: 0.7,
@@ -301,21 +303,9 @@ function Chat() {
       });
       return response.choices[0].message.content;
     } catch (error) {
-      console.error('Error getting localized welcome message:', error);
-      // Fallback messages in different languages
-      const fallbackMessages = {
-        'pt': 'Olá! Bem-vindo ao chat.',
-        'en': 'Hello! Welcome to the chat.',
-        'es': '¡Hola! Bienvenido al chat.',
-        'fr': 'Bonjour! Bienvenue dans le chat.',
-        'de': 'Hallo! Willkommen im Chat.',
-        'it': 'Ciao! Benvenuto nella chat.',
-        'ja': 'こんにちは！チャットへようこそ。',
-        'ko': '안녕하세요! 채팅에 오신 것을 환영합니다.',
-        'zh': '你好！欢迎来到聊天。',
-        'ru': 'Привет! Добро пожаловать в чат.'
-      };
-      return fallbackMessages[langCode] || 'Hello! Welcome to the chat.';
+      console.error('Error getting welcome message:', error);
+      // Silently fall back to English without showing any error message
+      return t('welcome');
     }
   };
 
@@ -370,7 +360,7 @@ function Chat() {
       console.error('Error:', error);
       const errorMessage = {
         role: 'assistant',
-        content: 'I apologize, but I encountered an error. Please try again.',
+        content: t('errorTryAgain'),
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -503,7 +493,7 @@ function Chat() {
         <button 
           className={`message-action-button ${isLoading ? 'loading' : ''}`}
           onClick={() => handlePlayAudio(messageId, message.content)}
-          title="Play Audio"
+          title={t('playAudio')}
           disabled={isLoading}
         >
           {isLoading ? (
@@ -518,20 +508,19 @@ function Chat() {
             </svg>
           )}
         </button>
-        <button 
+        <button
           className={`message-action-button ${currentFeedback === 'like' ? 'active' : ''}`}
           onClick={() => handleLike(messageId)}
-          title="Like"
+          title={t('likeMessage')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={currentFeedback === 'like' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M7 10v12"/>
-            <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/>
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
           </svg>
         </button>
-        <button 
+        <button
           className={`message-action-button ${currentFeedback === 'dislike' ? 'active' : ''}`}
           onClick={() => handleDislike(messageId)}
-          title="Dislike"
+          title={t('dislikeMessage')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={currentFeedback === 'dislike' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M17 14V2"/>
@@ -541,7 +530,7 @@ function Chat() {
         <button 
           className={`message-action-button ${hasComment ? 'active' : ''}`}
           onClick={() => handleOpenCommentModal(message, index)}
-          title="Comment"
+          title={t('commentMessage')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={hasComment ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -593,21 +582,18 @@ function Chat() {
   };
 
   const handleMicClick = async () => {
-    // Check for secure context first
     if (!window.isSecureContext) {
-      alert('Microphone access requires a secure connection (HTTPS). Please use HTTPS or localhost.');
+      alert(t('errorMicrophone'));
       return;
     }
 
-    // Check for browser support
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert('Your browser does not support microphone access. Please try using a modern browser like Chrome, Firefox, or Safari.');
+      alert(t('errorBrowserSupport'));
       return;
     }
 
-    // Check if MediaRecorder is available
     if (typeof MediaRecorder === 'undefined') {
-      alert('Your browser does not support audio recording. Please try using a modern browser.');
+      alert(t('errorRecording'));
       return;
     }
 
@@ -624,7 +610,7 @@ function Chat() {
         };
       } catch (error) {
         console.error('Error initializing microphone:', error);
-        alert('Failed to access microphone. Please make sure you have granted microphone permissions and are using HTTPS.');
+        alert(t('errorMicrophoneAccess'));
         return;
       }
     }
@@ -688,7 +674,7 @@ function Chat() {
     } catch (error) {
       console.error('Error starting recording:', error);
       setIsRecording(false);
-      alert('Failed to start recording. Please try again.');
+      alert(t('errorStartRecording'));
     }
   };
 
@@ -701,7 +687,7 @@ function Chat() {
       } catch (error) {
         console.error('Error stopping recording:', error);
         setIsRecording(false);
-        alert('Failed to stop recording. Please try again.');
+        alert(t('errorStopRecording'));
       }
     }
   };
@@ -733,12 +719,12 @@ function Chat() {
         <div className="chat-header">
           <div className="chat-header-title">
             <img src={robotIcon} alt="AI Assistant" width="24" height="24" className="text-white" />
-            AI Assistant
+            {t('aiAssistant')}
           </div>
           <button 
             className="settings-button"
             onClick={() => setIsSettingsOpen(true)}
-            title="Settings"
+            title={t('settings')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3"></circle>
@@ -766,7 +752,33 @@ function Chat() {
                 </div>
                 <MessageActions message={message} index={index} />
                 <div className="message-timestamp">
-                  {formatDistanceToNow(message.timestamp, { addSuffix: true })}
+                  {formatDistanceToNow(message.timestamp, { 
+                    addSuffix: true,
+                    includeSeconds: true,
+                    locale: {
+                      formatDistance: (token, count) => {
+                        const translations = {
+                          lessThanXSeconds: t('justNow'),
+                          xSeconds: t('justNow'),
+                          halfAMinute: t('justNow'),
+                          lessThanXMinutes: `${count} ${t('minutes')} ${t('ago')}`,
+                          xMinutes: `${count} ${t('minutes')} ${t('ago')}`,
+                          aboutXHours: `${count} ${t('hours')} ${t('ago')}`,
+                          xHours: `${count} ${t('hours')} ${t('ago')}`,
+                          xDays: `${count} ${t('days')} ${t('ago')}`,
+                          aboutXWeeks: `${count} ${t('weeks')} ${t('ago')}`,
+                          xWeeks: `${count} ${t('weeks')} ${t('ago')}`,
+                          aboutXMonths: `${count} ${t('months')} ${t('ago')}`,
+                          xMonths: `${count} ${t('months')} ${t('ago')}`,
+                          aboutXYears: `${count} ${t('years')} ${t('ago')}`,
+                          xYears: `${count} ${t('years')} ${t('ago')}`,
+                          overXYears: `${count} ${t('years')} ${t('ago')}`,
+                          almostXYears: `${count} ${t('years')} ${t('ago')}`
+                        };
+                        return translations[token] || '';
+                      }
+                    }
+                  })}
                 </div>
               </div>
             </div>
@@ -797,6 +809,7 @@ function Chat() {
                 type="button" 
                 className="message-action-button"
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                title={t('addEmoji')}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/>
@@ -811,7 +824,7 @@ function Chat() {
                     onEmojiClick={onEmojiClick}
                     width={300}
                     height={400}
-                    searchPlaceholder="Search emoji..."
+                    searchPlaceholder={t('searchEmoji')}
                     theme="dark"
                     skinTonesDisabled
                     lazyLoadEmojis
@@ -824,7 +837,7 @@ function Chat() {
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Type your message..."
+              placeholder={t('sendMessage')}
               className="chat-input"
               disabled={isLoading}
               autoFocus
@@ -833,7 +846,7 @@ function Chat() {
               type="button" 
               className="message-action-button"
               onClick={handleMicClick}
-              title="Start Voice Chat"
+              title={t('startVoiceChat')}
               disabled={isLoading || isPlayingLastMessage}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

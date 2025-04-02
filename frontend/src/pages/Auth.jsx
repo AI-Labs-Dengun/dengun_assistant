@@ -3,12 +3,14 @@ import { useNavigate, Link } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import ThemeToggle from '../components/ThemeToggle'
+import { useTranslation } from '../hooks/useTranslation'
 
 function Auth() {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -22,7 +24,7 @@ function Auth() {
       const querySnapshot = await getDocs(q)
 
       if (querySnapshot.empty) {
-        setError('No account found with this email. Please sign up first.')
+        setError(t('noAccountFound'))
         return
       }
 
@@ -31,7 +33,7 @@ function Auth() {
       
       navigate('/chat')
     } catch (err) {
-      setError('Error signing in. Please try again.')
+      setError(t('signInError'))
       console.error('Error during sign in:', err)
     } finally {
       setLoading(false)
@@ -44,10 +46,10 @@ function Auth() {
       <div className="glass-panel">
         <div className="text-center">
           <h2 className="text-heading">
-            Welcome back
+            {t('welcomeBack')}
           </h2>
           <p className="text-subheading">
-            Sign in with your email
+            {t('signInWithEmail')}
           </p>
         </div>
         
@@ -60,7 +62,7 @@ function Auth() {
         <form onSubmit={handleSubmit} className="form-group">
           <div className="form-field">
             <label htmlFor="email" className="text-label">
-              Email
+              {t('email')}
             </label>
             <input
               id="email"
@@ -81,12 +83,12 @@ function Auth() {
             disabled={loading}
             className="gradient-button"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? t('signingIn') : t('signIn')}
           </button>
 
           <p className="text-footer">
             <Link to="/signup" className="text-link">
-            Don't have an account?{' '}Sign Up
+              {t('noAccountSignUp')}
             </Link>
           </p>
         </form>

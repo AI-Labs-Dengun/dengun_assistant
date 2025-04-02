@@ -5,6 +5,7 @@ import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import ThemeToggle from '../components/ThemeToggle'
 import PhotoUpload from '../components/PhotoUpload'
+import { useTranslation } from '../hooks/useTranslation'
 
 function SignUp() {
   const navigate = useNavigate()
@@ -14,13 +15,14 @@ function SignUp() {
   const [error, setError] = useState('')
   const [photo, setPhoto] = useState(null)
   const [photoUrl, setPhotoUrl] = useState(null)
+  const { t } = useTranslation()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
     if (!name || !email) {
-      setError('Name and email are required')
+      setError(t('nameEmailRequired'))
       return
     }
 
@@ -30,7 +32,7 @@ function SignUp() {
       const querySnapshot = await getDocs(q)
       
       if (!querySnapshot.empty) {
-        setError('An account with this email already exists')
+        setError(t('emailAlreadyExists'))
         return
       }
 
@@ -54,7 +56,7 @@ function SignUp() {
 
       navigate('/')
     } catch (err) {
-      setError('Error creating account: ' + err.message)
+      setError(t('accountCreationError') + ': ' + err.message)
     }
   }
 
@@ -68,27 +70,27 @@ function SignUp() {
       <ThemeToggle />
       <div className="glass-panel">
         <div className="text-center">
-          <h1 className="text-heading">Create Your Profile</h1>
-          <p className="text-subheading">Please fill in your details to get started</p>
+          <h1 className="text-heading">{t('createProfile')}</h1>
+          <p className="text-subheading">{t('fillDetailsToStart')}</p>
         </div>
 
         <PhotoUpload onPhotoSelect={handlePhotoSelect} />
 
         <form onSubmit={handleSubmit} className="form-group">
           <div className="form-field">
-            <label htmlFor="name" className="text-label">Name</label>
+            <label htmlFor="name" className="text-label">{t('name')}</label>
             <input
               type="text"
               id="name"
               className="form-input"
-              placeholder="John Doe"
+              placeholder={t('namePlaceholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
 
           <div className="form-field">
-            <label htmlFor="email" className="text-label">Email</label>
+            <label htmlFor="email" className="text-label">{t('email')}</label>
             <input
               type="email"
               id="email"
@@ -100,12 +102,12 @@ function SignUp() {
           </div>
 
           <div className="form-field">
-            <label htmlFor="company" className="text-label">Company (Optional)</label>
+            <label htmlFor="company" className="text-label">{t('companyOptional')}</label>
             <input
               type="text"
               id="company"
               className="form-input"
-              placeholder="Enter your company name (optional)"
+              placeholder={t('companyPlaceholder')}
               value={company}
               onChange={(e) => setCompany(e.target.value)}
             />
@@ -114,11 +116,11 @@ function SignUp() {
           {error && <div className="text-error">{error}</div>}
 
           <button type="submit" className="gradient-button">
-            Create Profile
+            {t('createProfile')}
           </button>
 
           <div className="text-footer">
-             <Link to="/" className="text-link">Already have an account? Sign In</Link>
+             <Link to="/" className="text-link">{t('haveAccountSignIn')}</Link>
           </div>
         </form>
       </div>
