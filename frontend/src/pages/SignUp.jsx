@@ -1,10 +1,9 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { db, storage } from '../firebase'
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { db } from '../firebase'
+import { collection, query, where, getDocs, serverTimestamp, doc, setDoc } from 'firebase/firestore'
+import { auth } from '../firebase'
 import ThemeToggle from '../components/ThemeToggle'
-import PhotoUpload from '../components/PhotoUpload'
 import { useTranslation } from '../hooks/useTranslation'
 
 function SignUp() {
@@ -12,57 +11,58 @@ function SignUp() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [company, setCompany] = useState('')
-  const [error, setError] = useState('')
-  const [photo, setPhoto] = useState(null)
-  const [photoUrl, setPhotoUrl] = useState(null)
+  const [error, setError] = useState(null)
   const { t } = useTranslation()
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
+    setError(null)
+    setIsLoading(true)
 
     if (!name || !email) {
       setError(t('nameEmailRequired'))
+      setIsLoading(false)
       return
     }
 
     try {
       // Check if email already exists
-      const q = query(collection(db, "users"), where("email", "==", email))
+      const usersRef = collection(db, 'users')
+      const q = query(usersRef, where('email', '==', email))
       const querySnapshot = await getDocs(q)
       
       if (!querySnapshot.empty) {
-        setError(t('emailAlreadyExists'))
+        setError(t('emailExists'))
+        setIsLoading(false)
         return
       }
 
-      let profilePhotoUrl = null;
-      
-      // Upload photo if one was selected
-      if (photo) {
-        const storageRef = ref(storage, `profile-photos/${email}/${Date.now()}-${photo.name}`)
-        await uploadBytes(storageRef, photo)
-        profilePhotoUrl = await getDownloadURL(storageRef)
-      }
-
-      // Create new user
-      await addDoc(collection(db, "users"), {
+      // Create user document with a temporary ID
+      const userData = {
         name,
         email,
         company,
-        photoUrl: profilePhotoUrl,
-        createdAt: new Date().toISOString()
-      })
+        createdAt: serverTimestamp()
+      }
 
-      navigate('/')
-    } catch (err) {
-      setError(t('accountCreationError') + ': ' + err.message)
+      // Generate a temporary ID for the user
+      const tempUserId = `temp_${Date.now()}`
+      
+      // Store the user data
+      await setDoc(doc(db, 'users', tempUserId), userData)
+      
+      // Store email in localStorage for session management
+      localStorage.setItem('userEmail', email)
+      
+      // Navigate to chat
+      navigate('/chat')
+    } catch (error) {
+      console.error('Error during signup:', error)
+      setError(t('signupError'))
+    } finally {
+      setIsLoading(false)
     }
-  }
-
-  const handlePhotoSelect = (file, previewUrl) => {
-    setPhoto(file)
-    setPhotoUrl(previewUrl)
   }
 
   return (
@@ -73,8 +73,6 @@ function SignUp() {
           <h1 className="text-heading">{t('createProfile')}</h1>
           <p className="text-subheading">{t('fillDetailsToStart')}</p>
         </div>
-
-        <PhotoUpload onPhotoSelect={handlePhotoSelect} />
 
         <form onSubmit={handleSubmit} className="form-group">
           <div className="form-field">
@@ -115,7 +113,7 @@ function SignUp() {
 
           {error && <div className="text-error">{error}</div>}
 
-          <button type="submit" className="gradient-button">
+          <button type="submit" className="gradient-button" disabled={isLoading}>
             {t('createProfile')}
           </button>
 

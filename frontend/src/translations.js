@@ -31,7 +31,7 @@ export const translations = {
     waiting: 'Waiting',
     recording: 'Recording',
     transcribing: 'Transcribing',
-    readyToRecord: 'Ready to Record',
+    readyToRecord: 'Press the button to start recording',
     stop: 'Stop',
 
     // Settings
@@ -90,6 +90,9 @@ export const translations = {
     cropMe: 'Crop me',
     cancel: 'Cancel',
     apply: 'Apply',
+    photoUploadError: 'Failed to upload photo. Your account will be created without a profile photo.',
+    photoUploadCorsError: 'Unable to upload photo due to security restrictions. Please try again or contact support if the issue persists.',
+
   },
   pt: {
     // Chat UI
@@ -123,7 +126,7 @@ export const translations = {
     waiting: 'À Espera',
     recording: 'A Gravar',
     transcribing: 'A Transcrever',
-    readyToRecord: 'Pronto para Gravar',
+    readyToRecord: 'Pressione o botão para começar a gravar',
     stop: 'Parar',
 
     // Settings
@@ -182,6 +185,8 @@ export const translations = {
     cropMe: 'Recorte-me',
     cancel: 'Cancelar',
     apply: 'Aplicar',
+    photoUploadError: 'Falha ao fazer upload da foto. Sua conta será criada sem uma foto de perfil.',
+
   },
   es: {
     // Chat UI
@@ -215,7 +220,7 @@ export const translations = {
     waiting: 'Esperando',
     recording: 'Grabando',
     transcribing: 'Transcribiendo',
-    readyToRecord: 'Listo para Grabar',
+    readyToRecord: 'Presiona el botón para empezar a grabar',
     stop: 'Detener',
 
     // Settings
@@ -274,6 +279,8 @@ export const translations = {
     cropMe: 'Recórtame',
     cancel: 'Cancelar',
     apply: 'Aplicar',
+    photoUploadError: 'Error al subir la foto. Tu cuenta se creará sin foto de perfil.',
+
   },
   fr: {
     // Chat UI
@@ -307,7 +314,7 @@ export const translations = {
     waiting: 'En attente',
     recording: 'Enregistrement',
     transcribing: 'Transcription',
-    readyToRecord: 'Prêt à enregistrer',
+    readyToRecord: 'Appuyez sur le bouton pour commencer l\'enregistrement',
     stop: 'Arrêter',
 
     // Settings
@@ -399,7 +406,7 @@ export const translations = {
     waiting: 'Warten',
     recording: 'Aufnahme',
     transcribing: 'Transkribieren',
-    readyToRecord: 'Bereit zur Aufnahme',
+    readyToRecord: 'Drücken Sie den Knopf, um die Aufnahme zu starten',
     stop: 'Stoppen',
 
     // Settings
@@ -491,7 +498,7 @@ export const translations = {
     waiting: 'In attesa',
     recording: 'Registrazione',
     transcribing: 'Trascrizione',
-    readyToRecord: 'Pronto per registrare',
+    readyToRecord: 'Premi il pulsante per iniziare la registrazione',
     stop: 'Interrompi',
 
     // Settings
@@ -583,7 +590,7 @@ export const translations = {
     waiting: '等待中',
     recording: '正在录音',
     transcribing: '正在转录',
-    readyToRecord: '准备录音',
+    readyToRecord: '按下按钮开始录音',
     stop: '停止',
 
     // Settings
@@ -675,7 +682,7 @@ export const translations = {
     waiting: 'इंतजार कर रहा है',
     recording: 'रिकॉर्डिंग',
     transcribing: 'ट्रांसक्रिप्शन',
-    readyToRecord: 'रिकॉर्ड करने के लिए तैयार',
+    readyToRecord: 'रिकॉर्ड करने के लिए बटन दबाएं',
     stop: 'स्टॉप',
 
     // Settings
@@ -733,7 +740,10 @@ export const translations = {
     cropInstructions: 'पुनः स्थिति के लिए खींचें और आकार बदलने के लिए हैंडल का उपयोग करें',
     cropMe: 'क्रॉप करें',
     cancel: 'रद्द करें',
-    apply: 'लागू करें'
+    apply: 'लागू करें',
+    photoUploadError: 'Failed to upload photo. Your account will be created without a profile photo.',
+    photoUploadCorsError: 'Unable to upload photo due to security restrictions. Please try again or contact support if the issue persists.',
+
   },
   ru: {
     // Chat UI
@@ -767,7 +777,7 @@ export const translations = {
     waiting: 'В ожидании',
     recording: 'Запись',
     transcribing: 'Транскрипция',
-    readyToRecord: 'Готов к записи',
+    readyToRecord: 'Нажмите кнопку, чтобы начать запись',
     stop: 'Стоп',
 
     // Settings
@@ -859,7 +869,7 @@ export const translations = {
     waiting: '待機中',
     recording: '録音中',
     transcribing: '文字起こし中',
-    readyToRecord: '録音準備完了',
+    readyToRecord: '録音を開始するにはボタンを押してください',
     stop: '停止',
 
     // Settings
@@ -917,6 +927,8 @@ export const translations = {
     cropInstructions: 'ドラッグで位置を調整、ハンドルでサイズを変更',
     cropMe: '切り抜く',
     cancel: 'キャンセル',
-    apply: '適用'
+    apply: '適用',
+    photoUploadError: 'Failed to upload photo. Your account will be created without a profile photo.',
+    photoUploadCorsError: 'Unable to upload photo due to security restrictions. Please try again or contact support if the issue persists.'
   }
 }; 

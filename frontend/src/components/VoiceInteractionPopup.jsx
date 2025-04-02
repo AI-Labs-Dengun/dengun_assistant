@@ -52,10 +52,15 @@ const VoiceInteractionPopup = ({
               </div>
               <div className="voice-status-text">
                 <h4>{t('assistant')}</h4>
-                <p>{isPaused ? t('paused') : t('speaking')}</p>
+                <p>
+                  <span className="status-text-animated">
+                    {isPaused ? t('paused') : t('speaking')}
+                  </span>
+                </p>
               </div>
               <button
                 onClick={onSkip}
+                disabled={!isPlayingLastMessage}
                 className="ml-auto text-white/80 hover:text-white transition-colors"
               >
                 {isPaused ? (
@@ -84,9 +89,11 @@ const VoiceInteractionPopup = ({
               <div className="voice-status-text">
                 <h4>{t('you')}</h4>
                 <p>
-                  {isRecording ? t('recording') : 
-                   isTranscribing ? t('transcribing') : 
-                   t('readyToRecord')}
+                  <span className="status-text-animated">
+                    {isRecording ? t('recording') : 
+                     isTranscribing ? t('transcribing') : 
+                     t('readyToRecord')}
+                  </span>
                 </p>
               </div>
               <button

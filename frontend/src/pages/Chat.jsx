@@ -13,6 +13,8 @@ import robotIcon from '../assets/robot.png';
 import userIcon from '../assets/user.png';
 import aiInstructions from '../../../instructions/instructions-general.txt';
 import aiKnowledge from '../../../knowledge/knowledge-general.txt';
+import { db } from '../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
@@ -30,6 +32,7 @@ function Chat() {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const messagesEndRef = useRef(null);
   const [userEmail, setUserEmail] = useState('');
+  const [userPhotoUrl, setUserPhotoUrl] = useState(null);
   const [feedback, setFeedback] = useState({});
   const [comments, setComments] = useState({});
   const [isAudioLoading, setIsAudioLoading] = useState({});
@@ -75,6 +78,22 @@ function Chat() {
         return;
       }
       setUserEmail(email);
+
+      // Load user's profile photo
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where("email", "==", email));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          if (userData.photoUrl) {
+            setUserPhotoUrl(userData.photoUrl);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user photo:', error);
+      }
 
       // Load saved voice preference
       const savedVoice = localStorage.getItem('selectedVoice') || 'alloy';
@@ -123,7 +142,7 @@ function Chat() {
             const formData = new FormData();
             formData.append('file', audioBlob, 'audio.wav');
             formData.append('model', 'whisper-1');
-            formData.append('language', currentLang);
+            formData.append('response_format', 'json');
 
             console.log('Sending audio to Whisper API...');
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -157,7 +176,7 @@ function Chat() {
                 messages: [
                   {
                     role: "system",
-                    content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${currentLang}\nImportant: Respond in the same language as the user's message (${currentLang}). If the user writes in Portuguese, respond in Portuguese.`
+                    content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nImportant: You MUST detect and respond in the EXACT SAME language as the user's message. DO NOT translate anything. If the user speaks in Portuguese, you MUST respond in Portuguese. If they speak in Spanish, respond in Spanish. If in English, respond in English. Never translate to English.`
                   },
                   ...messages.concat(userMessage).map(msg => ({
                     role: msg.role,
@@ -570,18 +589,189 @@ function Chat() {
     }
   }, [isLoading, messages]);
 
-  const handleSkip = () => {
-    if (currentAudioRef?.current) {
-      if (currentAudioRef.current.paused) {
-        // Resume playback
+  const handlePauseResume = () => {
+    if (currentAudioRef.current) {
+      if (isPaused) {
         currentAudioRef.current.play();
         setIsPaused(false);
       } else {
-        // Pause playback
         currentAudioRef.current.pause();
-        audioStartTimeRef.current = currentAudioRef.current.currentTime;
         setIsPaused(true);
       }
+    }
+  };
+
+  const handleVoicePopupClose = () => {
+    // Stop any playing audio and cleanup
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      URL.revokeObjectURL(currentAudioRef.current.src);
+      currentAudioRef.current = null;
+    }
+
+    // Reset all voice-related states
+    setIsPlayingLastMessage(false);
+    setIsPaused(false);
+    setIsVoicePopupOpen(false);
+    setIsRecording(false);
+    setIsTranscribing(false);
+
+    // Clean up any ongoing recording
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current = null;
+    }
+  };
+
+  const handleStartRecording = async () => {
+    try {
+      // Always get a new stream and create a new MediaRecorder
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+      const mediaRecorder = new MediaRecorder(stream);
+      
+      mediaRecorder.ondataavailable = (event) => {
+        console.log('Audio data available');
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        console.log('Recording stopped, processing audio...');
+        setIsTranscribing(true);
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        audioChunksRef.current = [];
+        
+        try {
+          // Send audio to Whisper API with language detection
+          const formData = new FormData();
+          formData.append('file', audioBlob, 'audio.wav');
+          formData.append('model', 'whisper-1');
+          formData.append('response_format', 'json');
+
+          console.log('Sending audio to Whisper API...');
+          const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+            },
+            body: formData
+          });
+
+          if (!response.ok) {
+            throw new Error('Transcription failed');
+          }
+
+          const data = await response.json();
+          const transcript = data.text;
+          console.log('Transcription received:', transcript);
+          
+          if (transcript.trim()) {
+            // Add user message to chat
+            const userMessage = {
+              role: 'user',
+              content: transcript,
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, userMessage]);
+
+            // Get AI response in the same language as the user's message
+            const aiResponse = await openai.chat.completions.create({
+              model: "gpt-4",
+              messages: [
+                {
+                  role: "system",
+                  content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nImportant: You MUST detect and respond in the EXACT SAME language as the user's message. DO NOT translate anything. If the user speaks in Portuguese, you MUST respond in Portuguese. If they speak in Spanish, respond in Spanish. If in English, respond in English. Never translate to English.`
+                },
+                ...messages.concat(userMessage).map(msg => ({
+                  role: msg.role,
+                  content: msg.content
+                }))
+              ],
+              temperature: 0.7,
+              max_tokens: 1000
+            });
+
+            const assistantMessage = {
+              role: 'assistant',
+              content: aiResponse.choices[0].message.content,
+              timestamp: new Date()
+            };
+
+            // Add AI response to chat
+            setMessages(prev => [...prev, assistantMessage]);
+
+            // Play the AI response
+            setIsPlayingLastMessage(true);
+            setIsPaused(false);
+            try {
+              const response = await openai.audio.speech.create({
+                model: "tts-1",
+                voice: selectedVoice,
+                input: assistantMessage.content
+              });
+
+              const audioData = await response.blob();
+              const url = URL.createObjectURL(audioData);
+              const audio = new Audio(url);
+              currentAudioRef.current = audio;
+              
+              audio.onended = () => {
+                URL.revokeObjectURL(url);
+                setIsPlayingLastMessage(false);
+                setIsPaused(false);
+              };
+
+              audio.play().catch((error) => {
+                console.error('Error playing audio:', error);
+                setIsPlayingLastMessage(false);
+                setIsPaused(false);
+              });
+            } catch (error) {
+              console.error('Error playing AI response:', error);
+              setIsPlayingLastMessage(false);
+              setIsPaused(false);
+            }
+          }
+        } catch (error) {
+          console.error('Error transcribing audio:', error);
+          alert(t('errorTranscribeAudio'));
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      console.log('Starting recording...');
+      audioChunksRef.current = [];
+      mediaRecorder.start(1000); // Collect data every second
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      setIsRecording(false);
+      alert(t('errorStartRecording'));
+    }
+  };
+
+  const handleStopRecording = async () => {
+    try {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        console.log('Stopping recording...');
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+        
+        // Stop the audio stream tracks and clear the recorder
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach(track => track.stop());
+          audioStreamRef.current = null;
+        }
+      }
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+      alert(t('errorStopRecording'));
     }
   };
 
@@ -599,24 +789,6 @@ function Chat() {
     if (typeof MediaRecorder === 'undefined') {
       alert(t('errorRecording'));
       return;
-    }
-
-    // Check if we have an existing mediaRecorder
-    if (!mediaRecorderRef.current) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        audioStreamRef.current = stream;
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = mediaRecorder;
-        
-        mediaRecorder.ondataavailable = (event) => {
-          audioChunksRef.current.push(event.data);
-        };
-      } catch (error) {
-        console.error('Error initializing microphone:', error);
-        alert(t('errorMicrophoneAccess'));
-        return;
-      }
     }
 
     setIsVoicePopupOpen(true);
@@ -664,55 +836,6 @@ function Chat() {
     }
   };
 
-  const handleStartRecording = () => {
-    if (!mediaRecorderRef.current) {
-      alert('Audio recording is not supported in your browser.');
-      return;
-    }
-
-    try {
-      console.log('Starting recording...');
-      audioChunksRef.current = [];
-      mediaRecorderRef.current.start(1000); // Collect data every second
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      setIsRecording(false);
-      alert(t('errorStartRecording'));
-    }
-  };
-
-  const stopRecording = async () => {
-    if (mediaRecorderRef.current && isRecording) {
-      try {
-        console.log('Stopping recording...');
-        mediaRecorderRef.current.stop();
-        setIsRecording(false);
-      } catch (error) {
-        console.error('Error stopping recording:', error);
-        setIsRecording(false);
-        alert(t('errorStopRecording'));
-      }
-    }
-  };
-
-  const handleCloseVoicePopup = async () => {
-    // Stop recording if active
-    if (isRecording) {
-      await stopRecording();
-    }
-    
-    // Stop AI speech if playing
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-      setIsPlayingLastMessage(false);
-      setIsPaused(false);
-    }
-    
-    setIsVoicePopupOpen(false);
-  };
-
   if (isInitializing) {
     return <LoadingScreen />;
   }
@@ -745,7 +868,11 @@ function Chat() {
             >
               <div className="message-avatar">
                 {message.role === 'user' ? (
-                  <img src={userIcon} alt="User" className="w-6 h-6" />
+                  <img 
+                    src={userPhotoUrl || userIcon} 
+                    alt="User" 
+                    className="w-6 h-6 object-cover rounded-full" 
+                  />
                 ) : (
                   <img src={robotIcon} alt="AI Assistant" className="w-6 h-6" />
                 )}
@@ -889,18 +1016,18 @@ function Chat() {
       )}
       <VoiceInteractionPopup
         isOpen={isVoicePopupOpen}
-        onClose={handleCloseVoicePopup}
+        onClose={handleVoicePopupClose}
         isPlayingLastMessage={isPlayingLastMessage}
         isRecording={isRecording}
         isTranscribing={isTranscribing}
-        onStopRecording={stopRecording}
+        onStopRecording={handleStopRecording}
         onStartRecording={handleStartRecording}
         currentAudioRef={currentAudioRef}
         isPaused={isPaused}
-        onSkip={handleSkip}
+        onSkip={handlePauseResume}
       />
     </div>
   );
 }
 
-export default Chat; 
+export default Chat;
