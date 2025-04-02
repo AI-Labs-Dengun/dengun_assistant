@@ -21,8 +21,6 @@ function Settings({ isOpen, onClose, onThemeChange, onVoiceChange, selectedVoice
   };
 
   const handleVoiceChange = async (voice) => {
-    onVoiceChange(voice);
-    
     // Stop any currently playing audio
     if (audioRef.current) {
       audioRef.current.pause();
@@ -61,6 +59,9 @@ function Settings({ isOpen, onClose, onThemeChange, onVoiceChange, selectedVoice
       audio.play().catch(error => {
         console.error('Error playing sample voice:', error);
       });
+
+      // Only update the selected voice after successful audio generation
+      onVoiceChange(voice);
     } catch (error) {
       console.error('Error generating sample voice:', error);
     }
@@ -73,13 +74,13 @@ function Settings({ isOpen, onClose, onThemeChange, onVoiceChange, selectedVoice
   ];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="glass-panel rounded-lg p-6 max-w-md w-full mx-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-white">{t('settings')}</h2>
+    <div className="settings-overlay">
+      <div className="settings-panel">
+        <div className="settings-header">
+          <h2 className="settings-title">{t('settings')}</h2>
           <button
             onClick={onClose}
-            className="text-gray-300 hover:text-white"
+            className="settings-close"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/>
@@ -88,59 +89,45 @@ function Settings({ isOpen, onClose, onThemeChange, onVoiceChange, selectedVoice
           </button>
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-white mb-2">{t('theme')}</label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => onThemeChange('light')}
-                className={`px-4 py-2 rounded-lg ${
-                  currentTheme === 'light'
-                    ? 'bg-white text-black'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                {t('light')}
-              </button>
-              <button
-                onClick={() => onThemeChange('dark')}
-                className={`px-4 py-2 rounded-lg ${
-                  currentTheme === 'dark'
-                    ? 'bg-white text-black'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                {t('dark')}
-              </button>
-            </div>
+        <div className="settings-section">
+          <h3 className="settings-section-title">{t('theme')}</h3>
+          <div className="settings-options">
+            <button
+              onClick={() => onThemeChange('light')}
+              className={`settings-option ${currentTheme === 'light' ? 'selected' : ''}`}
+            >
+              {t('light')}
+            </button>
+            <button
+              onClick={() => onThemeChange('dark')}
+              className={`settings-option ${currentTheme === 'dark' ? 'selected' : ''}`}
+            >
+              {t('dark')}
+            </button>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white mb-2">{t('voice')}</label>
-            <div className="grid grid-cols-3 gap-2">
-              {voices.map((voice) => (
-                <button
-                  key={voice.id}
-                  onClick={() => handleVoiceChange(voice.id)}
-                  className={`px-4 py-2 rounded-lg ${
-                    selectedVoice === voice.id
-                      ? 'bg-white text-black'
-                      : 'bg-white/10 text-white hover:bg-white/20'
-                  }`}
-                >
-                  {voice.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-          >
-            {t('logout')}
-          </button>
         </div>
+
+        <div className="settings-section">
+          <h3 className="settings-section-title">{t('voice')}</h3>
+          <div className="settings-options">
+            {voices.map((voice) => (
+              <button
+                key={voice.id}
+                onClick={() => handleVoiceChange(voice.id)}
+                className={`settings-option ${selectedVoice === voice.id ? 'selected' : ''}`}
+              >
+                {voice.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={handleLogout}
+          className="settings-logout"
+        >
+          {t('logout')}
+        </button>
       </div>
     </div>
   );
