@@ -24,16 +24,15 @@ export const translations = {
 
     // Voice Interaction
     voiceChat: 'Voice Chat',
-    aiSpeaking: 'AI Assistant Speaking',
-    aiPaused: 'AI Assistant Paused',
-    recording: 'Recording Your Voice',
-    processing: 'Processing Your Message',
+    assistant: 'Assistant',
+    you: 'You',
+    speaking: 'Speaking',
+    paused: 'Paused',
+    waiting: 'Waiting',
+    recording: 'Recording',
+    transcribing: 'Transcribing',
     readyToRecord: 'Ready to Record',
-    clickPlayToContinue: 'Click play to continue',
-    clickStopToPause: 'Click stop to pause',
-    clickStopToEnd: 'Click stop to end recording',
-    pleaseWait: 'Please wait while we process your message',
-    clickRecordToStart: 'Click record to start speaking',
+    stop: 'Stop',
 
     // Settings
     settings: 'Settings',
@@ -117,16 +116,15 @@ export const translations = {
 
     // Voice Interaction
     voiceChat: 'Chat por Voz',
-    aiSpeaking: 'Assistente a Falar',
-    aiPaused: 'Assistente em Pausa',
-    recording: 'A Gravar a Sua Voz',
-    processing: 'A Processar a Sua Mensagem',
+    assistant: 'Assistente',
+    you: 'Você',
+    speaking: 'A Falar',
+    paused: 'Em Pausa',
+    waiting: 'À Espera',
+    recording: 'A Gravar',
+    transcribing: 'A Transcrever',
     readyToRecord: 'Pronto para Gravar',
-    clickPlayToContinue: 'Clique em reproduzir para continuar',
-    clickStopToPause: 'Clique em parar para pausar',
-    clickStopToEnd: 'Clique em parar para terminar a gravação',
-    pleaseWait: 'Por favor, aguarde enquanto processamos a sua mensagem',
-    clickRecordToStart: 'Clique em gravar para começar a falar',
+    stop: 'Parar',
 
     // Settings
     settings: 'Definições',
@@ -210,16 +208,15 @@ export const translations = {
 
     // Voice Interaction
     voiceChat: 'Chat por Voz',
-    aiSpeaking: 'Asistente Hablando',
-    aiPaused: 'Asistente Pausado',
-    recording: 'Grabando Tu Voz',
-    processing: 'Procesando Tu Mensaje',
+    assistant: 'Asistente',
+    you: 'Tú',
+    speaking: 'Hablando',
+    paused: 'Pausado',
+    waiting: 'Esperando',
+    recording: 'Grabando',
+    transcribing: 'Transcribiendo',
     readyToRecord: 'Listo para Grabar',
-    clickPlayToContinue: 'Clic en play para continuar',
-    clickStopToPause: 'Clic en stop para pausar',
-    clickStopToEnd: 'Clic en stop para terminar grabación',
-    pleaseWait: 'Por favor, espera mientras procesamos tu mensaje',
-    clickRecordToStart: 'Clic en grabar para comenzar a hablar',
+    stop: 'Detener',
 
     // Settings
     settings: 'Configuración',
@@ -303,16 +300,15 @@ export const translations = {
 
     // Voice Interaction
     voiceChat: 'Chat Vocal',
-    aiSpeaking: "L'assistant parle",
-    aiPaused: "L'assistant est en pause",
-    recording: 'Enregistrement en cours',
-    processing: 'Traitement de votre message',
+    assistant: 'Assistant',
+    you: 'Tu',
+    speaking: 'Parle',
+    paused: 'En pause',
+    waiting: 'En attente',
+    recording: 'Enregistrement',
+    transcribing: 'Transcription',
     readyToRecord: 'Prêt à enregistrer',
-    clickPlayToContinue: 'Cliquez sur lecture pour continuer',
-    clickStopToPause: 'Cliquez sur stop pour mettre en pause',
-    clickStopToEnd: "Cliquez sur stop pour arrêter l'enregistrement",
-    pleaseWait: 'Veuillez patienter pendant le traitement de votre message',
-    clickRecordToStart: 'Cliquez sur enregistrer pour commencer à parler',
+    stop: 'Arrêter',
 
     // Settings
     settings: 'Paramètres',
@@ -396,16 +392,15 @@ export const translations = {
 
     // Voice Interaction
     voiceChat: 'SprachChat',
-    aiSpeaking: 'KI-Assistent spricht',
-    aiPaused: 'KI-Assistent pausiert',
-    recording: 'Aufnahme läuft',
-    processing: 'Nachricht wird verarbeitet',
+    assistant: 'Assistent',
+    you: 'Du',
+    speaking: 'Sprechen',
+    paused: 'Gepausert',
+    waiting: 'Warten',
+    recording: 'Aufnahme',
+    transcribing: 'Transkribieren',
     readyToRecord: 'Bereit zur Aufnahme',
-    clickPlayToContinue: 'Klicken Sie auf Play zum Fortfahren',
-    clickStopToPause: 'Klicken Sie auf Stop zum Pausieren',
-    clickStopToEnd: 'Klicken Sie auf Stop zum Beenden der Aufnahme',
-    pleaseWait: 'Bitte warten Sie, während Ihre Nachricht verarbeitet wird',
-    clickRecordToStart: 'Klicken Sie auf Aufnahme, um zu sprechen',
+    stop: 'Stoppen',
 
     // Settings
     settings: 'Einstellungen',
@@ -489,16 +484,15 @@ export const translations = {
 
     // Voice Interaction
     voiceChat: 'Chat Vocale',
-    aiSpeaking: "L'assistente sta parlando",
-    aiPaused: "L'assistente è in pausa",
-    recording: 'Registrazione in corso',
-    processing: 'Elaborazione del messaggio',
+    assistant: 'Assistente',
+    you: 'Tu',
+    speaking: 'Parlando',
+    paused: 'In pausa',
+    waiting: 'In attesa',
+    recording: 'Registrazione',
+    transcribing: 'Trascrizione',
     readyToRecord: 'Pronto per registrare',
-    clickPlayToContinue: 'Clicca play per continuare',
-    clickStopToPause: 'Clicca stop per mettere in pausa',
-    clickStopToEnd: 'Clicca stop per terminare la registrazione',
-    pleaseWait: 'Attendi mentre elaboriamo il tuo messaggio',
-    clickRecordToStart: 'Clicca registra per iniziare a parlare',
+    stop: 'Interrompi',
 
     // Settings
     settings: 'Impostazioni',
@@ -582,16 +576,15 @@ export const translations = {
 
     // Voice Interaction
     voiceChat: '语音聊天',
-    aiSpeaking: 'AI助手正在说话',
-    aiPaused: 'AI助手已暂停',
+    assistant: '助手',
+    you: '你',
+    speaking: '正在说话',
+    paused: '已暂停',
+    waiting: '等待中',
     recording: '正在录音',
-    processing: '正在处理您的消息',
+    transcribing: '正在转录',
     readyToRecord: '准备录音',
-    clickPlayToContinue: '点击播放继续',
-    clickStopToPause: '点击停止暂停',
-    clickStopToEnd: '点击停止结束录音',
-    pleaseWait: '请等待，我们正在处理您的消息',
-    clickRecordToStart: '点击录音开始说话',
+    stop: '停止',
 
     // Settings
     settings: '设置',
@@ -675,16 +668,15 @@ export const translations = {
 
     // Voice Interaction
     voiceChat: 'वॉइस चैट',
-    aiSpeaking: 'AI सहायक बोल रहा है',
-    aiPaused: 'AI सहायक रुका हुआ है',
-    recording: 'रिकॉर्डिंग चल रही है',
-    processing: 'आपका संदेश प्रोसेस हो रहा है',
+    assistant: 'असिस्टेंट',
+    you: 'तुम',
+    speaking: 'बोल रहा है',
+    paused: 'रुक रहा है',
+    waiting: 'इंतजार कर रहा है',
+    recording: 'रिकॉर्डिंग',
+    transcribing: 'ट्रांसक्रिप्शन',
     readyToRecord: 'रिकॉर्ड करने के लिए तैयार',
-    clickPlayToContinue: 'जारी रखने के लिए प्ले पर क्लिक करें',
-    clickStopToPause: 'रोकने के लिए स्टॉप पर क्लिक करें',
-    clickStopToEnd: 'रिकॉर्डिंग समाप्त करने के लिए स्टॉप पर क्लिक करें',
-    pleaseWait: 'कृपया प्रतीक्षा करें, हम आपका संदेश प्रोसेस कर रहे हैं',
-    clickRecordToStart: 'बोलना शुरू करने के लिए रिकॉर्ड पर क्लिक करें',
+    stop: 'स्टॉप',
 
     // Settings
     settings: 'सेटिंग्स',
@@ -768,16 +760,15 @@ export const translations = {
 
     // Voice Interaction
     voiceChat: 'Голосовой чат',
-    aiSpeaking: 'ИИ-ассистент говорит',
-    aiPaused: 'ИИ-ассистент на паузе',
-    recording: 'Идёт запись',
-    processing: 'Обработка вашего сообщения',
+    assistant: 'Ассистент',
+    you: 'Ты',
+    speaking: 'Говорит',
+    paused: 'На паузе',
+    waiting: 'В ожидании',
+    recording: 'Запись',
+    transcribing: 'Транскрипция',
     readyToRecord: 'Готов к записи',
-    clickPlayToContinue: 'Нажмите воспроизвести, чтобы продолжить',
-    clickStopToPause: 'Нажмите стоп для паузы',
-    clickStopToEnd: 'Нажмите стоп, чтобы закончить запись',
-    pleaseWait: 'Пожалуйста, подождите, пока мы обрабатываем ваше сообщение',
-    clickRecordToStart: 'Нажмите запись, чтобы начать говорить',
+    stop: 'Стоп',
 
     // Settings
     settings: 'Настройки',
@@ -861,16 +852,15 @@ export const translations = {
 
     // Voice Interaction
     voiceChat: '音声チャット',
-    aiSpeaking: 'AIアシスタントが話し中',
-    aiPaused: 'AIアシスタントが一時停止中',
+    assistant: 'アシスタント',
+    you: 'あなた',
+    speaking: '話し中',
+    paused: '一時停止中',
+    waiting: '待機中',
     recording: '録音中',
-    processing: 'メッセージを処理中',
+    transcribing: '文字起こし中',
     readyToRecord: '録音準備完了',
-    clickPlayToContinue: '続けるには再生をクリック',
-    clickStopToPause: '一時停止するには停止をクリック',
-    clickStopToEnd: '録音を終了するには停止をクリック',
-    pleaseWait: 'メッセージを処理中です。お待ちください',
-    clickRecordToStart: '話し始めるには録音をクリック',
+    stop: '停止',
 
     // Settings
     settings: '設定',

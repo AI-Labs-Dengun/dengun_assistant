@@ -463,31 +463,47 @@
   }
 
   .voice-interaction-popup {
-    @apply w-full max-w-md p-6 rounded-2xl shadow-xl;
-    background: linear-gradient(to bottom right, var(--color-primary), var(--color-secondary), var(--color-tertiary));
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.644);
+    @apply p-8 rounded-2xl shadow-xl;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary), var(--color-tertiary));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .voice-interaction-popup::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.1) 0%, transparent 60%),
+                radial-gradient(circle at 0% 100%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+    pointer-events: none;
   }
 
   .voice-status-container {
-    @apply space-y-6 mt-6 mb-8;
+    @apply space-y-4 mt-6 mb-8;
+    position: relative;
+    z-index: 1;
   }
 
   .voice-status {
-    @apply flex items-center gap-4 p-4 rounded-lg transition-all duration-200;
-    background: linear-gradient(to right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    @apply flex items-center gap-4 p-4 rounded-xl transition-all duration-300;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
   }
 
   .voice-status.active {
-    background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+    transform: scale(1.02);
   }
 
   .voice-status-icon {
-    @apply w-12 h-12 flex items-center justify-center rounded-full text-white;
+    @apply w-12 h-12 flex items-center justify-center rounded-xl text-white;
     background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
   .voice-status-text {
@@ -495,7 +511,7 @@
   }
 
   .voice-status-text h4 {
-    @apply text-white font-medium mb-1;
+    @apply text-white font-semibold mb-1;
   }
 
   .voice-status-text p {
@@ -503,40 +519,53 @@
   }
 
   .stop-button {
-    @apply px-4 py-2 bg-red-500/20 text-red-200 rounded-lg hover:bg-red-500/30 transition-colors;
-    border: 1px solid rgba(255, 0, 0, 0.2);
+    @apply px-4 py-2 rounded-xl font-medium transition-all duration-300;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: rgb(254, 202, 202);
   }
 
   .stop-button:hover {
-    border-color: rgba(255, 0, 0, 0.3);
+    background: rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.4);
+    transform: translateY(-1px);
   }
 
   .voice-control-container {
-    @apply flex justify-center mt-6;
+    @apply flex justify-center mt-8;
+    position: relative;
+    z-index: 1;
   }
 
   .voice-control-button {
-    @apply w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200;
+    @apply w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300;
     background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
   }
 
-  .voice-control-button svg {
-    @apply w-8 h-8 text-white;
-  }
-
-  .voice-control-button:hover {
-    @apply transform scale-105;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  .voice-control-button:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 12px 36px rgba(31, 38, 135, 0.25);
+    border-color: rgba(255, 255, 255, 0.3);
   }
 
   .voice-control-button.active {
-    @apply bg-red-500/20 border-2 border-red-500/30;
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.8), rgba(239, 68, 68, 0.6));
+    border-color: rgba(239, 68, 68, 0.4);
+    animation: pulse 2s infinite;
   }
 
-  .voice-control-button.active:hover {
-    @apply bg-red-500/30;
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 20px rgba(239, 68, 68, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
   }
 }
 

@@ -115,11 +115,15 @@ function Chat() {
           audioChunksRef.current = [];
           
           try {
+            // Get the current language from the translation hook
+            const currentLang = currentLanguage;
+            console.log('Using language for transcription:', currentLang);
+
             // Send audio to Whisper API with language detection
             const formData = new FormData();
             formData.append('file', audioBlob, 'audio.wav');
             formData.append('model', 'whisper-1');
-            formData.append('language', userLanguage);
+            formData.append('language', currentLang);
 
             console.log('Sending audio to Whisper API...');
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -153,7 +157,7 @@ function Chat() {
                 messages: [
                   {
                     role: "system",
-                    content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}\nImportant: Respond in the same language as the user's message (${userLanguage}). If the user writes in Portuguese, respond in Portuguese.`
+                    content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${currentLang}\nImportant: Respond in the same language as the user's message (${currentLang}). If the user writes in Portuguese, respond in Portuguese.`
                   },
                   ...messages.concat(userMessage).map(msg => ({
                     role: msg.role,
@@ -514,7 +518,7 @@ function Chat() {
           title={t('likeMessage')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={currentFeedback === 'like' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
           </svg>
         </button>
         <button
