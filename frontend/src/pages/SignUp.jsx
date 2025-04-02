@@ -1,66 +1,68 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { db, storage } from '../firebase'
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { db } from '../firebase'
+import { collection, query, where, getDocs, serverTimestamp, doc, setDoc } from 'firebase/firestore'
+import { auth } from '../firebase'
 import ThemeToggle from '../components/ThemeToggle'
-import PhotoUpload from '../components/PhotoUpload'
+import { useTranslation } from '../hooks/useTranslation'
 
 function SignUp() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [company, setCompany] = useState('')
-  const [error, setError] = useState('')
-  const [photo, setPhoto] = useState(null)
-  const [photoUrl, setPhotoUrl] = useState(null)
+  const [error, setError] = useState(null)
+  const { t } = useTranslation()
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
+    setError(null)
+    setIsLoading(true)
 
     if (!name || !email) {
-      setError('Name and email are required')
+      setError(t('nameEmailRequired'))
+      setIsLoading(false)
       return
     }
 
     try {
       // Check if email already exists
-      const q = query(collection(db, "users"), where("email", "==", email))
+      const usersRef = collection(db, 'users')
+      const q = query(usersRef, where('email', '==', email))
       const querySnapshot = await getDocs(q)
       
       if (!querySnapshot.empty) {
-        setError('An account with this email already exists')
+        setError(t('emailExists'))
+        setIsLoading(false)
         return
       }
 
-      let profilePhotoUrl = null;
-      
-      // Upload photo if one was selected
-      if (photo) {
-        const storageRef = ref(storage, `profile-photos/${email}/${Date.now()}-${photo.name}`)
-        await uploadBytes(storageRef, photo)
-        profilePhotoUrl = await getDownloadURL(storageRef)
-      }
-
-      // Create new user
-      await addDoc(collection(db, "users"), {
+      // Create user document with a temporary ID
+      const userData = {
         name,
         email,
         company,
-        photoUrl: profilePhotoUrl,
-        createdAt: new Date().toISOString()
-      })
+        createdAt: serverTimestamp()
+      }
 
-      navigate('/')
-    } catch (err) {
-      setError('Error creating account: ' + err.message)
+      // Generate a temporary ID for the user
+      const tempUserId = `temp_${Date.now()}`
+      
+      // Store the user data
+      await setDoc(doc(db, 'users', tempUserId), userData)
+      
+      // Store email in localStorage for session management
+      localStorage.setItem('userEmail', email)
+      
+      // Navigate to chat
+      navigate('/chat')
+    } catch (error) {
+      console.error('Error during signup:', error)
+      setError(t('signupError'))
+    } finally {
+      setIsLoading(false)
     }
-  }
-
-  const handlePhotoSelect = (file, previewUrl) => {
-    setPhoto(file)
-    setPhotoUrl(previewUrl)
   }
 
   return (
@@ -68,27 +70,25 @@ function SignUp() {
       <ThemeToggle />
       <div className="glass-panel">
         <div className="text-center">
-          <h1 className="text-heading">Create Your Profile</h1>
-          <p className="text-subheading">Please fill in your details to get started</p>
+          <h1 className="text-heading">{t('createProfile')}</h1>
+          <p className="text-subheading">{t('fillDetailsToStart')}</p>
         </div>
-
-        <PhotoUpload onPhotoSelect={handlePhotoSelect} />
 
         <form onSubmit={handleSubmit} className="form-group">
           <div className="form-field">
-            <label htmlFor="name" className="text-label">Name</label>
+            <label htmlFor="name" className="text-label">{t('name')}</label>
             <input
               type="text"
               id="name"
               className="form-input"
-              placeholder="John Doe"
+              placeholder={t('namePlaceholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
 
           <div className="form-field">
-            <label htmlFor="email" className="text-label">Email</label>
+            <label htmlFor="email" className="text-label">{t('email')}</label>
             <input
               type="email"
               id="email"
@@ -100,12 +100,12 @@ function SignUp() {
           </div>
 
           <div className="form-field">
-            <label htmlFor="company" className="text-label">Company (Optional)</label>
+            <label htmlFor="company" className="text-label">{t('companyOptional')}</label>
             <input
               type="text"
               id="company"
               className="form-input"
-              placeholder="Enter your company name (optional)"
+              placeholder={t('companyPlaceholder')}
               value={company}
               onChange={(e) => setCompany(e.target.value)}
             />
@@ -113,12 +113,12 @@ function SignUp() {
 
           {error && <div className="text-error">{error}</div>}
 
-          <button type="submit" className="gradient-button">
-            Create Profile
+          <button type="submit" className="gradient-button" disabled={isLoading}>
+            {t('createProfile')}
           </button>
 
           <div className="text-footer">
-             <Link to="/" className="text-link">Already have an account? Sign In</Link>
+             <Link to="/" className="text-link">{t('haveAccountSignIn')}</Link>
           </div>
         </form>
       </div>

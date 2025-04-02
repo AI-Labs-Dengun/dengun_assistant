@@ -1,5 +1,7 @@
 import React from 'react';
 import robot2Icon from '../assets/robot2.png';
+import user2Icon from '../assets/user2.png';
+import { useTranslation } from '../hooks/useTranslation';
 
 const VoiceInteractionPopup = ({
   isOpen,
@@ -13,6 +15,8 @@ const VoiceInteractionPopup = ({
   isPaused,
   onSkip
 }) => {
+  const { t } = useTranslation();
+  
   if (!isOpen) return null;
 
   // Determine who is currently active
@@ -20,13 +24,13 @@ const VoiceInteractionPopup = ({
   const isUserActive = isRecording || isTranscribing;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="glass-panel rounded-lg p-6 max-w-md w-full mx-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-white">Voice Chat</h2>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="voice-interaction-popup relative max-w-md w-full mx-4">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white">{t('voiceChat')}</h2>
           <button
             onClick={onClose}
-            className="text-gray-300 hover:text-white"
+            className="text-white/80 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/>
@@ -35,74 +39,80 @@ const VoiceInteractionPopup = ({
           </button>
         </div>
 
-        <div className="flex flex-col items-center space-y-6">
-          {/* Status Icon */}
-          <div className="relative">
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center overflow-hidden
-              ${isAISpeaking ? 'bg-blue-500/20' : 
-                isRecording ? 'bg-red-500/20' : 
-                'bg-gray-500/20'}`}>
-              {isAISpeaking ? (
+        <div className="voice-status-container">
+          {/* Show AI Speaking Status only when AI is active */}
+          {isAISpeaking && (
+            <div className="voice-status active">
+              <div className="voice-status-icon">
                 <img 
                   src={robot2Icon} 
-                  alt="AI Speaking" 
-                  className="w-full h-full object-contain p-4"
+                  alt="AI" 
+                  className="w-8 h-8 object-contain"
                 />
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              )}
+              </div>
+              <div className="voice-status-text">
+                <h4>{t('assistant')}</h4>
+                <p>
+                  <span className="status-text-animated">
+                    {isPaused ? t('paused') : t('speaking')}
+                  </span>
+                </p>
+              </div>
+              <button
+                onClick={onSkip}
+                disabled={!isPlayingLastMessage}
+                className="ml-auto text-white/80 hover:text-white transition-colors"
+              >
+                {isPaused ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M6 4h4v16H6zm8 0h4v16h-4z"/>
+                  </svg>
+                )}
+              </button>
             </div>
-            <div className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-3 h-3 rounded-full
-              ${isRecording ? 'bg-red-500 animate-pulse' : 
-                isTranscribing ? 'bg-yellow-500' : 
-                'bg-green-500'}`} />
-          </div>
+          )}
 
-          {/* Status Text */}
-          <div className="text-center">
-            <p className="text-lg font-medium text-white">
-              {isAISpeaking ? (isPaused ? 'AI Assistant Paused' : 'AI Assistant Speaking') :
-               isRecording ? 'Recording Your Voice' :
-               isTranscribing ? 'Processing Your Message' :
-               'Ready to Record'}
-            </p>
-            <p className="text-sm text-gray-300 mt-1">
-              {isAISpeaking ? (isPaused ? 'Click play to continue' : 'Click stop to pause') :
-               isRecording ? 'Click stop to end recording' :
-               isTranscribing ? 'Please wait while we process your message' :
-               'Click record to start speaking'}
-            </p>
-          </div>
-
-          {/* Action Button */}
-          <button
-            onClick={isAISpeaking ? onSkip : (isRecording ? onStopRecording : onStartRecording)}
-            disabled={isTranscribing}
-            className={`w-16 h-16 rounded-full flex items-center justify-center transition-colors
-              ${isAISpeaking || isRecording
-                ? 'bg-red-500 hover:bg-red-600' 
-                : 'bg-green-500 hover:bg-green-600'
-              } ${isTranscribing ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {(isAISpeaking && !isPaused) || isRecording ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="6" y="6" width="12" height="12"/>
-              </svg>
-            ) : isAISpeaking && isPaused ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="5 3 19 12 5 21 5 3"/>
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                <line x1="12" y1="19" x2="12" y2="22"/>
-              </svg>
-            )}
-          </button>
+          {/* Show User Speaking Status only when user is active or neither is active */}
+          {(!isAISpeaking) && (
+            <div className={`voice-status ${isUserActive ? 'active' : ''}`}>
+              <div className="voice-status-icon">
+                <img 
+                  src={user2Icon} 
+                  alt="User" 
+                  className="w-8 h-8 object-contain"
+                />
+              </div>
+              <div className="voice-status-text">
+                <h4>{t('you')}</h4>
+                <p>
+                  <span className="status-text-animated">
+                    {isRecording ? t('recording') : 
+                     isTranscribing ? t('transcribing') : 
+                     t('readyToRecord')}
+                  </span>
+                </p>
+              </div>
+              <button
+                onClick={isRecording ? onStopRecording : onStartRecording}
+                disabled={isAISpeaking}
+                className="ml-auto text-white/80 hover:text-white transition-colors"
+              >
+                {isRecording ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M6 4h4v16H6zm8 0h4v16h-4z"/>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

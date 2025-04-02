@@ -8,10 +8,13 @@ import Settings from '../components/Settings';
 import CommentModal from '../components/CommentModal';
 import LoadingScreen from '../components/LoadingScreen';
 import VoiceInteractionPopup from '../components/VoiceInteractionPopup';
+import { useTranslation } from '../hooks/useTranslation';
 import robotIcon from '../assets/robot.png';
 import userIcon from '../assets/user.png';
 import aiInstructions from '../../../instructions/instructions-general.txt';
 import aiKnowledge from '../../../knowledge/knowledge-general.txt';
+import { db } from '../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
@@ -20,6 +23,7 @@ const openai = new OpenAI({
 
 function Chat() {
   const navigate = useNavigate();
+  const { t, currentLanguage } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +32,7 @@ function Chat() {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const messagesEndRef = useRef(null);
   const [userEmail, setUserEmail] = useState('');
+  const [userPhotoUrl, setUserPhotoUrl] = useState(null);
   const [feedback, setFeedback] = useState({});
   const [comments, setComments] = useState({});
   const [isAudioLoading, setIsAudioLoading] = useState({});
@@ -74,6 +79,22 @@ function Chat() {
       }
       setUserEmail(email);
 
+      // Load user's profile photo
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where("email", "==", email));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          if (userData.photoUrl) {
+            setUserPhotoUrl(userData.photoUrl);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user photo:', error);
+      }
+
       // Load saved voice preference
       const savedVoice = localStorage.getItem('selectedVoice') || 'alloy';
       setSelectedVoice(savedVoice);
@@ -113,11 +134,15 @@ function Chat() {
           audioChunksRef.current = [];
           
           try {
+            // Get the current language from the translation hook
+            const currentLang = currentLanguage;
+            console.log('Using language for transcription:', currentLang);
+
             // Send audio to Whisper API with language detection
             const formData = new FormData();
             formData.append('file', audioBlob, 'audio.wav');
             formData.append('model', 'whisper-1');
-            formData.append('language', userLanguage);
+            formData.append('response_format', 'json');
 
             console.log('Sending audio to Whisper API...');
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -151,7 +176,7 @@ function Chat() {
                 messages: [
                   {
                     role: "system",
-                    content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}\nImportant: Respond in the same language as the user's message (${userLanguage}). If the user writes in Portuguese, respond in Portuguese.`
+                    content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nImportant: You MUST detect and respond in the EXACT SAME language as the user's message. DO NOT translate anything. If the user speaks in Portuguese, you MUST respond in Portuguese. If they speak in Spanish, respond in Spanish. If in English, respond in English. Never translate to English.`
                   },
                   ...messages.concat(userMessage).map(msg => ({
                     role: msg.role,
@@ -206,7 +231,7 @@ function Chat() {
             }
           } catch (error) {
             console.error('Error transcribing audio:', error);
-            alert('Failed to transcribe audio. Please try again.');
+            alert(t('errorTranscribeAudio'));
           } finally {
             setIsTranscribing(false);
           }
@@ -225,16 +250,16 @@ function Chat() {
       const langCode = browserLang.split('-')[0];
       // Map language codes to supported languages
       const languageMap = {
-        'pt': 'pt',
-        'en': 'en',
-        'es': 'es',
-        'fr': 'fr',
-        'de': 'de',
-        'it': 'it',
-        'ja': 'ja',
-        'ko': 'ko',
-        'zh': 'zh',
-        'ru': 'ru'
+        'en': 'en', // English
+        'es': 'es', // Spanish
+        'pt': 'pt', // Portuguese
+        'fr': 'fr', // French
+        'de': 'de', // German
+        'it': 'it', // Italian
+        'zh': 'zh', // Chinese
+        'hi': 'hi', // Hindi
+        'ru': 'ru', // Russian
+        'ja': 'ja'  // Japanese
       };
       const detectedLanguage = languageMap[langCode] || 'en';
       setUserLanguage(detectedLanguage);
@@ -289,11 +314,11 @@ function Chat() {
         messages: [
           {
             role: "system",
-            content: `Instructions: ${instructions}\nLanguage: ${langCode}\nImportant: Respond in the same language as specified (${langCode}). If the language is Portuguese (pt), respond in Portuguese.`
+            content: `Instructions: ${instructions}\nLanguage: ${langCode}\nImportant: Respond in the same language as the user's language (${langCode}). If the user's language is Portuguese, respond in Portuguese.`
           },
           {
             role: "user",
-            content: "Say hello and welcome the user to the chat in their language."
+            content: "Say hello and welcome the user to the chat."
           }
         ],
         temperature: 0.7,
@@ -301,21 +326,9 @@ function Chat() {
       });
       return response.choices[0].message.content;
     } catch (error) {
-      console.error('Error getting localized welcome message:', error);
-      // Fallback messages in different languages
-      const fallbackMessages = {
-        'pt': 'Olá! Bem-vindo ao chat.',
-        'en': 'Hello! Welcome to the chat.',
-        'es': '¡Hola! Bienvenido al chat.',
-        'fr': 'Bonjour! Bienvenue dans le chat.',
-        'de': 'Hallo! Willkommen im Chat.',
-        'it': 'Ciao! Benvenuto nella chat.',
-        'ja': 'こんにちは！チャットへようこそ。',
-        'ko': '안녕하세요! 채팅에 오신 것을 환영합니다.',
-        'zh': '你好！欢迎来到聊天。',
-        'ru': 'Привет! Добро пожаловать в чат.'
-      };
-      return fallbackMessages[langCode] || 'Hello! Welcome to the chat.';
+      console.error('Error getting welcome message:', error);
+      // Silently fall back to English without showing any error message
+      return t('welcome');
     }
   };
 
@@ -370,7 +383,7 @@ function Chat() {
       console.error('Error:', error);
       const errorMessage = {
         role: 'assistant',
-        content: 'I apologize, but I encountered an error. Please try again.',
+        content: t('errorTryAgain'),
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -503,7 +516,7 @@ function Chat() {
         <button 
           className={`message-action-button ${isLoading ? 'loading' : ''}`}
           onClick={() => handlePlayAudio(messageId, message.content)}
-          title="Play Audio"
+          title={t('playAudio')}
           disabled={isLoading}
         >
           {isLoading ? (
@@ -518,20 +531,19 @@ function Chat() {
             </svg>
           )}
         </button>
-        <button 
+        <button
           className={`message-action-button ${currentFeedback === 'like' ? 'active' : ''}`}
           onClick={() => handleLike(messageId)}
-          title="Like"
+          title={t('likeMessage')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={currentFeedback === 'like' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M7 10v12"/>
-            <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/>
+            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
           </svg>
         </button>
-        <button 
+        <button
           className={`message-action-button ${currentFeedback === 'dislike' ? 'active' : ''}`}
           onClick={() => handleDislike(messageId)}
-          title="Dislike"
+          title={t('dislikeMessage')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={currentFeedback === 'dislike' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M17 14V2"/>
@@ -541,7 +553,7 @@ function Chat() {
         <button 
           className={`message-action-button ${hasComment ? 'active' : ''}`}
           onClick={() => handleOpenCommentModal(message, index)}
-          title="Comment"
+          title={t('commentMessage')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={hasComment ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -577,56 +589,206 @@ function Chat() {
     }
   }, [isLoading, messages]);
 
-  const handleSkip = () => {
-    if (currentAudioRef?.current) {
-      if (currentAudioRef.current.paused) {
-        // Resume playback
+  const handlePauseResume = () => {
+    if (currentAudioRef.current) {
+      if (isPaused) {
         currentAudioRef.current.play();
         setIsPaused(false);
       } else {
-        // Pause playback
         currentAudioRef.current.pause();
-        audioStartTimeRef.current = currentAudioRef.current.currentTime;
         setIsPaused(true);
       }
     }
   };
 
-  const handleMicClick = async () => {
-    // Check for secure context first
-    if (!window.isSecureContext) {
-      alert('Microphone access requires a secure connection (HTTPS). Please use HTTPS or localhost.');
-      return;
+  const handleVoicePopupClose = () => {
+    // Stop any playing audio and cleanup
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      URL.revokeObjectURL(currentAudioRef.current.src);
+      currentAudioRef.current = null;
     }
 
-    // Check for browser support
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert('Your browser does not support microphone access. Please try using a modern browser like Chrome, Firefox, or Safari.');
-      return;
-    }
+    // Reset all voice-related states
+    setIsPlayingLastMessage(false);
+    setIsPaused(false);
+    setIsVoicePopupOpen(false);
+    setIsRecording(false);
+    setIsTranscribing(false);
 
-    // Check if MediaRecorder is available
-    if (typeof MediaRecorder === 'undefined') {
-      alert('Your browser does not support audio recording. Please try using a modern browser.');
-      return;
+    // Clean up any ongoing recording
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
     }
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current = null;
+    }
+  };
 
-    // Check if we have an existing mediaRecorder
-    if (!mediaRecorderRef.current) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        audioStreamRef.current = stream;
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = mediaRecorder;
+  const handleStartRecording = async () => {
+    try {
+      // Always get a new stream and create a new MediaRecorder
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+      const mediaRecorder = new MediaRecorder(stream);
+      
+      mediaRecorder.ondataavailable = (event) => {
+        console.log('Audio data available');
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        console.log('Recording stopped, processing audio...');
+        setIsTranscribing(true);
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        audioChunksRef.current = [];
         
-        mediaRecorder.ondataavailable = (event) => {
-          audioChunksRef.current.push(event.data);
-        };
-      } catch (error) {
-        console.error('Error initializing microphone:', error);
-        alert('Failed to access microphone. Please make sure you have granted microphone permissions and are using HTTPS.');
-        return;
+        try {
+          // Send audio to Whisper API with language detection
+          const formData = new FormData();
+          formData.append('file', audioBlob, 'audio.wav');
+          formData.append('model', 'whisper-1');
+          formData.append('response_format', 'json');
+
+          console.log('Sending audio to Whisper API...');
+          const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+            },
+            body: formData
+          });
+
+          if (!response.ok) {
+            throw new Error('Transcription failed');
+          }
+
+          const data = await response.json();
+          const transcript = data.text;
+          console.log('Transcription received:', transcript);
+          
+          if (transcript.trim()) {
+            // Add user message to chat
+            const userMessage = {
+              role: 'user',
+              content: transcript,
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, userMessage]);
+
+            // Get AI response in the same language as the user's message
+            const aiResponse = await openai.chat.completions.create({
+              model: "gpt-4",
+              messages: [
+                {
+                  role: "system",
+                  content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nImportant: You MUST detect and respond in the EXACT SAME language as the user's message. DO NOT translate anything. If the user speaks in Portuguese, you MUST respond in Portuguese. If they speak in Spanish, respond in Spanish. If in English, respond in English. Never translate to English.`
+                },
+                ...messages.concat(userMessage).map(msg => ({
+                  role: msg.role,
+                  content: msg.content
+                }))
+              ],
+              temperature: 0.7,
+              max_tokens: 1000
+            });
+
+            const assistantMessage = {
+              role: 'assistant',
+              content: aiResponse.choices[0].message.content,
+              timestamp: new Date()
+            };
+
+            // Add AI response to chat
+            setMessages(prev => [...prev, assistantMessage]);
+
+            // Play the AI response
+            setIsPlayingLastMessage(true);
+            setIsPaused(false);
+            try {
+              const response = await openai.audio.speech.create({
+                model: "tts-1",
+                voice: selectedVoice,
+                input: assistantMessage.content
+              });
+
+              const audioData = await response.blob();
+              const url = URL.createObjectURL(audioData);
+              const audio = new Audio(url);
+              currentAudioRef.current = audio;
+              
+              audio.onended = () => {
+                URL.revokeObjectURL(url);
+                setIsPlayingLastMessage(false);
+                setIsPaused(false);
+              };
+
+              audio.play().catch((error) => {
+                console.error('Error playing audio:', error);
+                setIsPlayingLastMessage(false);
+                setIsPaused(false);
+              });
+            } catch (error) {
+              console.error('Error playing AI response:', error);
+              setIsPlayingLastMessage(false);
+              setIsPaused(false);
+            }
+          }
+        } catch (error) {
+          console.error('Error transcribing audio:', error);
+          alert(t('errorTranscribeAudio'));
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      console.log('Starting recording...');
+      audioChunksRef.current = [];
+      mediaRecorder.start(1000); // Collect data every second
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      setIsRecording(false);
+      alert(t('errorStartRecording'));
+    }
+  };
+
+  const handleStopRecording = async () => {
+    try {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        console.log('Stopping recording...');
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+        
+        // Stop the audio stream tracks and clear the recorder
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach(track => track.stop());
+          audioStreamRef.current = null;
+        }
       }
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+      alert(t('errorStopRecording'));
+    }
+  };
+
+  const handleMicClick = async () => {
+    if (!window.isSecureContext) {
+      alert(t('errorMicrophone'));
+      return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert(t('errorBrowserSupport'));
+      return;
+    }
+
+    if (typeof MediaRecorder === 'undefined') {
+      alert(t('errorRecording'));
+      return;
     }
 
     setIsVoicePopupOpen(true);
@@ -674,55 +836,6 @@ function Chat() {
     }
   };
 
-  const handleStartRecording = () => {
-    if (!mediaRecorderRef.current) {
-      alert('Audio recording is not supported in your browser.');
-      return;
-    }
-
-    try {
-      console.log('Starting recording...');
-      audioChunksRef.current = [];
-      mediaRecorderRef.current.start(1000); // Collect data every second
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      setIsRecording(false);
-      alert('Failed to start recording. Please try again.');
-    }
-  };
-
-  const stopRecording = async () => {
-    if (mediaRecorderRef.current && isRecording) {
-      try {
-        console.log('Stopping recording...');
-        mediaRecorderRef.current.stop();
-        setIsRecording(false);
-      } catch (error) {
-        console.error('Error stopping recording:', error);
-        setIsRecording(false);
-        alert('Failed to stop recording. Please try again.');
-      }
-    }
-  };
-
-  const handleCloseVoicePopup = async () => {
-    // Stop recording if active
-    if (isRecording) {
-      await stopRecording();
-    }
-    
-    // Stop AI speech if playing
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-      setIsPlayingLastMessage(false);
-      setIsPaused(false);
-    }
-    
-    setIsVoicePopupOpen(false);
-  };
-
   if (isInitializing) {
     return <LoadingScreen />;
   }
@@ -733,12 +846,12 @@ function Chat() {
         <div className="chat-header">
           <div className="chat-header-title">
             <img src={robotIcon} alt="AI Assistant" width="24" height="24" className="text-white" />
-            AI Assistant
+            {t('aiAssistant')}
           </div>
           <button 
             className="settings-button"
             onClick={() => setIsSettingsOpen(true)}
-            title="Settings"
+            title={t('settings')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3"></circle>
@@ -755,7 +868,11 @@ function Chat() {
             >
               <div className="message-avatar">
                 {message.role === 'user' ? (
-                  <img src={userIcon} alt="User" className="w-6 h-6" />
+                  <img 
+                    src={userPhotoUrl || userIcon} 
+                    alt="User" 
+                    className="w-6 h-6 object-cover rounded-full" 
+                  />
                 ) : (
                   <img src={robotIcon} alt="AI Assistant" className="w-6 h-6" />
                 )}
@@ -766,7 +883,33 @@ function Chat() {
                 </div>
                 <MessageActions message={message} index={index} />
                 <div className="message-timestamp">
-                  {formatDistanceToNow(message.timestamp, { addSuffix: true })}
+                  {formatDistanceToNow(message.timestamp, { 
+                    addSuffix: true,
+                    includeSeconds: true,
+                    locale: {
+                      formatDistance: (token, count) => {
+                        const translations = {
+                          lessThanXSeconds: t('justNow'),
+                          xSeconds: t('justNow'),
+                          halfAMinute: t('justNow'),
+                          lessThanXMinutes: `${count} ${t('minutes')} ${t('ago')}`,
+                          xMinutes: `${count} ${t('minutes')} ${t('ago')}`,
+                          aboutXHours: `${count} ${t('hours')} ${t('ago')}`,
+                          xHours: `${count} ${t('hours')} ${t('ago')}`,
+                          xDays: `${count} ${t('days')} ${t('ago')}`,
+                          aboutXWeeks: `${count} ${t('weeks')} ${t('ago')}`,
+                          xWeeks: `${count} ${t('weeks')} ${t('ago')}`,
+                          aboutXMonths: `${count} ${t('months')} ${t('ago')}`,
+                          xMonths: `${count} ${t('months')} ${t('ago')}`,
+                          aboutXYears: `${count} ${t('years')} ${t('ago')}`,
+                          xYears: `${count} ${t('years')} ${t('ago')}`,
+                          overXYears: `${count} ${t('years')} ${t('ago')}`,
+                          almostXYears: `${count} ${t('years')} ${t('ago')}`
+                        };
+                        return translations[token] || '';
+                      }
+                    }
+                  })}
                 </div>
               </div>
             </div>
@@ -797,6 +940,7 @@ function Chat() {
                 type="button" 
                 className="message-action-button"
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                title={t('addEmoji')}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/>
@@ -811,7 +955,7 @@ function Chat() {
                     onEmojiClick={onEmojiClick}
                     width={300}
                     height={400}
-                    searchPlaceholder="Search emoji..."
+                    searchPlaceholder={t('searchEmoji')}
                     theme="dark"
                     skinTonesDisabled
                     lazyLoadEmojis
@@ -824,7 +968,7 @@ function Chat() {
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Type your message..."
+              placeholder={t('sendMessage')}
               className="chat-input"
               disabled={isLoading}
               autoFocus
@@ -833,7 +977,7 @@ function Chat() {
               type="button" 
               className="message-action-button"
               onClick={handleMicClick}
-              title="Start Voice Chat"
+              title={t('startVoiceChat')}
               disabled={isLoading || isPlayingLastMessage}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -872,18 +1016,18 @@ function Chat() {
       )}
       <VoiceInteractionPopup
         isOpen={isVoicePopupOpen}
-        onClose={handleCloseVoicePopup}
+        onClose={handleVoicePopupClose}
         isPlayingLastMessage={isPlayingLastMessage}
         isRecording={isRecording}
         isTranscribing={isTranscribing}
-        onStopRecording={stopRecording}
+        onStopRecording={handleStopRecording}
         onStartRecording={handleStartRecording}
         currentAudioRef={currentAudioRef}
         isPaused={isPaused}
-        onSkip={handleSkip}
+        onSkip={handlePauseResume}
       />
     </div>
   );
 }
 
-export default Chat; 
+export default Chat;
