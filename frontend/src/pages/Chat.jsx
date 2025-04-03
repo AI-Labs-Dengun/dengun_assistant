@@ -21,6 +21,629 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true
 });
 
+const tooltips = {
+  pt: [
+    {
+      id: 1,
+      text: "Como é que a Dengun pode ajudar a minha startup?",
+      category: "startup-studio"
+    },
+    {
+      id: 2,
+      text: "Preciso de ajuda com o desenvolvimento do meu MVP",
+      category: "product-development"
+    },
+    {
+      id: 3,
+      text: "Quero melhorar a minha estratégia de marketing digital",
+      category: "digital-marketing"
+    },
+    {
+      id: 4,
+      text: "Como posso otimizar o SEO e o desempenho do meu site?",
+      category: "seo"
+    },
+    {
+      id: 5,
+      text: "Procuro consultoria em estratégia digital",
+      category: "strategy"
+    },
+    {
+      id: 6,
+      text: "Como posso implementar IA no meu negócio?",
+      category: "ai-solutions"
+    },
+    {
+      id: 7,
+      text: "Quero desenvolver uma marca mais forte",
+      category: "branding"
+    },
+    {
+      id: 8,
+      text: "Necessito de serviços de design UX/UI",
+      category: "design"
+    },
+    {
+      id: 9,
+      text: "Como posso escalar a minha infraestrutura digital?",
+      category: "infrastructure"
+    },
+    {
+      id: 10,
+      text: "Gostaria de saber mais sobre e-commerce e marketplaces",
+      category: "ecommerce"
+    },
+    {
+      id: 11,
+      text: "Preciso de análise de dados e relatórios detalhados",
+      category: "data-analytics"
+    },
+    {
+      id: 12,
+      text: "O que diferencia a Dengun no mercado?",
+      category: "company-info"
+    }
+  ],
+  en: [
+    {
+      id: 1,
+      text: "How can Dengun help my startup?",
+      category: "startup-studio"
+    },
+    {
+      id: 2,
+      text: "I need help with my MVP development",
+      category: "product-development"
+    },
+    {
+      id: 3,
+      text: "I want to improve my digital marketing strategy",
+      category: "digital-marketing"
+    },
+    {
+      id: 4,
+      text: "How can I optimize my website's SEO and performance?",
+      category: "seo"
+    },
+    {
+      id: 5,
+      text: "Looking for digital strategy consulting",
+      category: "strategy"
+    },
+    {
+      id: 6,
+      text: "How can I implement AI in my business?",
+      category: "ai-solutions"
+    },
+    {
+      id: 7,
+      text: "I want to develop a stronger brand",
+      category: "branding"
+    },
+    {
+      id: 8,
+      text: "I need UX/UI design services",
+      category: "design"
+    },
+    {
+      id: 9,
+      text: "How can I scale my digital infrastructure?",
+      category: "infrastructure"
+    },
+    {
+      id: 10,
+      text: "I'd like to know more about e-commerce and marketplaces",
+      category: "ecommerce"
+    },
+    {
+      id: 11,
+      text: "I need detailed data analysis and reports",
+      category: "data-analytics"
+    },
+    {
+      id: 12,
+      text: "What makes Dengun stand out in the market?",
+      category: "company-info"
+    }
+  ],
+  es: [
+    {
+      id: 1,
+      text: "¿Cómo puede Dengun ayudar a mi startup?",
+      category: "startup-studio"
+    },
+    {
+      id: 2,
+      text: "Necesito ayuda con el desarrollo de mi MVP",
+      category: "product-development"
+    },
+    {
+      id: 3,
+      text: "Quiero mejorar mi estrategia de marketing digital",
+      category: "digital-marketing"
+    },
+    {
+      id: 4,
+      text: "¿Cómo puedo optimizar el SEO y rendimiento de mi sitio web?",
+      category: "seo"
+    },
+    {
+      id: 5,
+      text: "Busco consultoría en estrategia digital",
+      category: "strategy"
+    },
+    {
+      id: 6,
+      text: "¿Cómo puedo implementar IA en mi negocio?",
+      category: "ai-solutions"
+    },
+    {
+      id: 7,
+      text: "Quiero desarrollar una marca más fuerte",
+      category: "branding"
+    },
+    {
+      id: 8,
+      text: "Necesito servicios de diseño UX/UI",
+      category: "design"
+    },
+    {
+      id: 9,
+      text: "¿Cómo puedo escalar mi infraestructura digital?",
+      category: "infrastructure"
+    },
+    {
+      id: 10,
+      text: "Me gustaría saber más sobre e-commerce y marketplaces",
+      category: "ecommerce"
+    },
+    {
+      id: 11,
+      text: "Necesito análisis de datos e informes detallados",
+      category: "data-analytics"
+    },
+    {
+      id: 12,
+      text: "¿Qué hace que Dengun destaque en el mercado?",
+      category: "company-info"
+    }
+  ],
+  fr: [
+    {
+      id: 1,
+      text: "Comment Dengun peut-il aider ma startup ?",
+      category: "startup-studio"
+    },
+    {
+      id: 2,
+      text: "J'ai besoin d'aide pour développer mon MVP",
+      category: "product-development"
+    },
+    {
+      id: 3,
+      text: "Je veux améliorer ma stratégie de marketing digital",
+      category: "digital-marketing"
+    },
+    {
+      id: 4,
+      text: "Comment optimiser le SEO et la performance de mon site ?",
+      category: "seo"
+    },
+    {
+      id: 5,
+      text: "Je cherche des conseils en stratégie digitale",
+      category: "strategy"
+    },
+    {
+      id: 6,
+      text: "Comment implémenter l'IA dans mon entreprise ?",
+      category: "ai-solutions"
+    },
+    {
+      id: 7,
+      text: "Je veux développer une marque plus forte",
+      category: "branding"
+    },
+    {
+      id: 8,
+      text: "J'ai besoin de services de design UX/UI",
+      category: "design"
+    },
+    {
+      id: 9,
+      text: "Comment puis-je faire évoluer mon infrastructure digitale ?",
+      category: "infrastructure"
+    },
+    {
+      id: 10,
+      text: "Je voudrais en savoir plus sur l'e-commerce",
+      category: "ecommerce"
+    },
+    {
+      id: 11,
+      text: "J'ai besoin d'analyses de données détaillées",
+      category: "data-analytics"
+    },
+    {
+      id: 12,
+      text: "Qu'est-ce qui distingue Dengun sur le marché ?",
+      category: "company-info"
+    }
+  ],
+  de: [
+    {
+      id: 1,
+      text: "Wie kann Dengun meinem Startup helfen?",
+      category: "startup-studio"
+    },
+    {
+      id: 2,
+      text: "Ich brauche Hilfe bei der MVP-Entwicklung",
+      category: "product-development"
+    },
+    {
+      id: 3,
+      text: "Ich möchte meine Digital-Marketing-Strategie verbessern",
+      category: "digital-marketing"
+    },
+    {
+      id: 4,
+      text: "Wie kann ich SEO und Website-Performance optimieren?",
+      category: "seo"
+    },
+    {
+      id: 5,
+      text: "Ich suche Beratung für digitale Strategie",
+      category: "strategy"
+    },
+    {
+      id: 6,
+      text: "Wie kann ich KI in meinem Unternehmen einsetzen?",
+      category: "ai-solutions"
+    },
+    {
+      id: 7,
+      text: "Ich möchte eine stärkere Marke entwickeln",
+      category: "branding"
+    },
+    {
+      id: 8,
+      text: "Ich benötige UX/UI-Design-Services",
+      category: "design"
+    },
+    {
+      id: 9,
+      text: "Wie kann ich meine digitale Infrastruktur skalieren?",
+      category: "infrastructure"
+    },
+    {
+      id: 10,
+      text: "Ich möchte mehr über E-Commerce erfahren",
+      category: "ecommerce"
+    },
+    {
+      id: 11,
+      text: "Ich brauche detaillierte Datenanalysen",
+      category: "data-analytics"
+    },
+    {
+      id: 12,
+      text: "Was macht Dengun am Markt besonders?",
+      category: "company-info"
+    }
+  ],
+  it: [
+    {
+      id: 1,
+      text: "Come può Dengun aiutare la mia startup?",
+      category: "startup-studio"
+    },
+    {
+      id: 2,
+      text: "Ho bisogno di aiuto con lo sviluppo del mio MVP",
+      category: "product-development"
+    },
+    {
+      id: 3,
+      text: "Voglio migliorare la mia strategia di marketing digitale",
+      category: "digital-marketing"
+    },
+    {
+      id: 4,
+      text: "Come posso ottimizzare SEO e performance del sito?",
+      category: "seo"
+    },
+    {
+      id: 5,
+      text: "Cerco consulenza in strategia digitale",
+      category: "strategy"
+    },
+    {
+      id: 6,
+      text: "Come posso implementare l'IA nel mio business?",
+      category: "ai-solutions"
+    },
+    {
+      id: 7,
+      text: "Voglio sviluppare un brand più forte",
+      category: "branding"
+    },
+    {
+      id: 8,
+      text: "Ho bisogno di servizi di design UX/UI",
+      category: "design"
+    },
+    {
+      id: 9,
+      text: "Come posso scalare la mia infrastruttura digitale?",
+      category: "infrastructure"
+    },
+    {
+      id: 10,
+      text: "Vorrei saperne di più su e-commerce e marketplace",
+      category: "ecommerce"
+    },
+    {
+      id: 11,
+      text: "Ho bisogno di analisi dati dettagliate",
+      category: "data-analytics"
+    },
+    {
+      id: 12,
+      text: "Cosa rende Dengun unica nel mercato?",
+      category: "company-info"
+    }
+  ],
+  zh: [
+    {
+      id: 1,
+      text: "Dengun如何帮助我的创业公司？",
+      category: "startup-studio"
+    },
+    {
+      id: 2,
+      text: "我需要MVP开发帮助",
+      category: "product-development"
+    },
+    {
+      id: 3,
+      text: "我想改善数字营销策略",
+      category: "digital-marketing"
+    },
+    {
+      id: 4,
+      text: "如何优化网站SEO和性能？",
+      category: "seo"
+    },
+    {
+      id: 5,
+      text: "寻求数字战略咨询",
+      category: "strategy"
+    },
+    {
+      id: 6,
+      text: "如何在业务中实施人工智能？",
+      category: "ai-solutions"
+    },
+    {
+      id: 7,
+      text: "我想建立更强大的品牌",
+      category: "branding"
+    },
+    {
+      id: 8,
+      text: "需要UX/UI设计服务",
+      category: "design"
+    },
+    {
+      id: 9,
+      text: "如何扩展数字基础设施？",
+      category: "infrastructure"
+    },
+    {
+      id: 10,
+      text: "想了解更多关于电子商务的信息",
+      category: "ecommerce"
+    },
+    {
+      id: 11,
+      text: "需要详细的数据分析报告",
+      category: "data-analytics"
+    },
+    {
+      id: 12,
+      text: "Dengun在市场上有什么特别之处？",
+      category: "company-info"
+    }
+  ],
+  hi: [
+    {
+      id: 1,
+      text: "Dengun मेरे स्टार्टअप की कैसे मदद कर सकता है?",
+      category: "startup-studio"
+    },
+    {
+      id: 2,
+      text: "मुझे MVP विकास में मदद चाहिए",
+      category: "product-development"
+    },
+    {
+      id: 3,
+      text: "मैं अपनी डिजिटल मार्केटिंग रणनीति को बेहतर बनाना चाहता हूं",
+      category: "digital-marketing"
+    },
+    {
+      id: 4,
+      text: "SEO और वेबसाइट प्रदर्शन को कैसे बेहतर बनाएं?",
+      category: "seo"
+    },
+    {
+      id: 5,
+      text: "डिजिटल रणनीति में सलाह चाहिए",
+      category: "strategy"
+    },
+    {
+      id: 6,
+      text: "अपने व्यवसाय में AI को कैसे लागू करें?",
+      category: "ai-solutions"
+    },
+    {
+      id: 7,
+      text: "मैं एक मजबूत ब्रांड विकसित करना चाहता हूं",
+      category: "branding"
+    },
+    {
+      id: 8,
+      text: "UX/UI डिज़ाइन सेवाओं की आवश्यकता है",
+      category: "design"
+    },
+    {
+      id: 9,
+      text: "डिजिटल इंफ्रास्ट्रक्चर को कैसे बढ़ाएं?",
+      category: "infrastructure"
+    },
+    {
+      id: 10,
+      text: "ई-कॉमर्स के बारे में और जानना चाहता हूं",
+      category: "ecommerce"
+    },
+    {
+      id: 11,
+      text: "विस्तृत डेटा विश्लेषण की आवश्यकता है",
+      category: "data-analytics"
+    },
+    {
+      id: 12,
+      text: "Dengun बाजार में क्या अलग करता है?",
+      category: "company-info"
+    }
+  ],
+  ru: [
+    {
+      id: 1,
+      text: "Как Dengun может помочь моему стартапу?",
+      category: "startup-studio"
+    },
+    {
+      id: 2,
+      text: "Мне нужна помощь в разработке MVP",
+      category: "product-development"
+    },
+    {
+      id: 3,
+      text: "Хочу улучшить стратегию цифрового маркетинга",
+      category: "digital-marketing"
+    },
+    {
+      id: 4,
+      text: "Как оптимизировать SEO и производительность сайта?",
+      category: "seo"
+    },
+    {
+      id: 5,
+      text: "Ищу консультацию по цифровой стратегии",
+      category: "strategy"
+    },
+    {
+      id: 6,
+      text: "Как внедрить ИИ в мой бизнес?",
+      category: "ai-solutions"
+    },
+    {
+      id: 7,
+      text: "Хочу развить более сильный бренд",
+      category: "branding"
+    },
+    {
+      id: 8,
+      text: "Нужны услуги UX/UI дизайна",
+      category: "design"
+    },
+    {
+      id: 9,
+      text: "Как масштабировать цифровую инфраструктуру?",
+      category: "infrastructure"
+    },
+    {
+      id: 10,
+      text: "Хочу узнать больше об электронной коммерции",
+      category: "ecommerce"
+    },
+    {
+      id: 11,
+      text: "Нужен детальный анализ данных",
+      category: "data-analytics"
+    },
+    {
+      id: 12,
+      text: "Чем Dengun выделяется на рынке?",
+      category: "company-info"
+    }
+  ],
+  ja: [
+    {
+      id: 1,
+      text: "Dengunは私のスタートアップをどのように支援できますか？",
+      category: "startup-studio"
+    },
+    {
+      id: 2,
+      text: "MVPの開発支援が必要です",
+      category: "product-development"
+    },
+    {
+      id: 3,
+      text: "デジタルマーケティング戦略を改善したい",
+      category: "digital-marketing"
+    },
+    {
+      id: 4,
+      text: "SEOとウェブサイトのパフォーマンスを最適化するには？",
+      category: "seo"
+    },
+    {
+      id: 5,
+      text: "デジタル戦略のコンサルティングを探しています",
+      category: "strategy"
+    },
+    {
+      id: 6,
+      text: "AIをビジネスに実装するには？",
+      category: "ai-solutions"
+    },
+    {
+      id: 7,
+      text: "より強力なブランドを構築したい",
+      category: "branding"
+    },
+    {
+      id: 8,
+      text: "UX/UIデザインサービスが必要です",
+      category: "design"
+    },
+    {
+      id: 9,
+      text: "デジタルインフラをスケールするには？",
+      category: "infrastructure"
+    },
+    {
+      id: 10,
+      text: "eコマースについてもっと知りたい",
+      category: "ecommerce"
+    },
+    {
+      id: 11,
+      text: "詳細なデータ分析が必要です",
+      category: "data-analytics"
+    },
+    {
+      id: 12,
+      text: "Dengunの市場での強みは何ですか？",
+      category: "company-info"
+    }
+  ]
+};
+
 function Chat() {
   const navigate = useNavigate();
   const { t, currentLanguage } = useTranslation();
@@ -55,6 +678,8 @@ function Chat() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [instructions, setInstructions] = useState('');
   const [knowledge, setKnowledge] = useState('');
+  const [selectedTooltips, setSelectedTooltips] = useState([]);
+  const [showTooltips, setShowTooltips] = useState(true);
 
   useEffect(() => {
     // Apply theme on component mount and when theme changes
@@ -291,6 +916,9 @@ function Chat() {
         console.error('Error loading AI files:', error);
       }
 
+      // Select random tooltips on initialization
+      setSelectedTooltips(selectRandomTooltips(detectedLanguage));
+
       setIsInitializing(false);
     };
 
@@ -343,7 +971,9 @@ function Chat() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
-
+    
+    hideTooltips(); // Hide tooltips when user sends a message
+    
     const userMessage = {
       role: 'user',
       content: inputMessage.trim(),
@@ -628,6 +1258,7 @@ function Chat() {
   };
 
   const handleStartRecording = async () => {
+    hideTooltips(); // Hide tooltips when user starts voice recording
     try {
       // Always get a new stream and create a new MediaRecorder
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -836,6 +1467,78 @@ function Chat() {
     }
   };
 
+  // Function to randomly select 4 tooltips based on current language
+  const selectRandomTooltips = (language) => {
+    const availableTooltips = tooltips[language] || tooltips['en']; // fallback to English
+    const shuffled = [...availableTooltips].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 4);
+  };
+
+  const handleTooltipClick = async (tooltipText) => {
+    setInputMessage(tooltipText);
+    hideTooltips(); // Hide tooltips when user clicks one
+    
+    // Create a user message object
+    const userMessage = {
+      role: 'user',
+      content: tooltipText.trim(),
+      timestamp: new Date()
+    };
+
+    // Add user message to chat
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsLoading(true);
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}`
+          },
+          ...messages.concat(userMessage).map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }))
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      });
+
+      const assistantMessage = {
+        role: 'assistant',
+        content: response.choices[0].message.content,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMessage = {
+        role: 'assistant',
+        content: t('errorTryAgain'),
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Update tooltips when language changes
+  useEffect(() => {
+    if (currentLanguage) {
+      setSelectedTooltips(selectRandomTooltips(currentLanguage));
+    }
+  }, [currentLanguage]);
+
+  // Function to hide tooltips
+  const hideTooltips = () => {
+    setShowTooltips(false);
+  };
+
   if (isInitializing) {
     return <LoadingScreen />;
   }
@@ -934,6 +1637,19 @@ function Chat() {
         </div>
 
         <form onSubmit={handleSubmit} className="chat-input-container">
+          {showTooltips && (
+            <div className="tooltips-container">
+              {selectedTooltips.map((tooltip) => (
+                <button
+                  key={tooltip.id}
+                  className="tooltip-button"
+                  onClick={() => handleTooltipClick(tooltip.text)}
+                >
+                  {tooltip.text}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="chat-input-wrapper">
             <div className="emoji-picker-container" ref={emojiPickerRef}>
               <button 

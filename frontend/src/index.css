@@ -113,7 +113,7 @@
   }
 
   .chat-container {
-    @apply h-[90vh] w-full max-w-5xl mx-auto flex flex-col bg-transparent;
+    @apply h-[90vh] w-full max-w-3xl mx-auto flex flex-col bg-transparent;
   }
 
   .chat-header {
@@ -247,28 +247,70 @@
   }
 
   .chat-input-container {
-    @apply p-4 backdrop-blur-md border-t border-white/10 mx-auto w-full max-w-3xl;
+    padding: 16px;
+    width: 100%;
+    max-width: 768px;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+
+  .input-area {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
   }
 
   .chat-input-wrapper {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px;
     width: 100%;
+    max-width: 768px;
+    margin: 0 auto;
+    box-sizing: border-box;
   }
 
   .chat-input {
     flex: 1;
     background: transparent;
     border: none;
-    color: white;
-    font-size: 0.95rem;
+    color: #fff;
+    font-size: 14px;
     outline: none;
-    padding: 0 8px;
+    min-width: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .chat-input-wrapper .message-action-button,
+  .chat-input-wrapper .send-button {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+    transition: color 0.2s ease;
+  }
+
+  .chat-input-wrapper .message-action-button:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: transparent !important;
+  }
+
+  .chat-input-wrapper .send-button:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: transparent !important;
   }
 
   .chat-input::placeholder {
@@ -277,12 +319,11 @@
 
   .chat-input-wrapper .message-action-button {
     color: rgba(255, 255, 255, 0.6);
-    transition: all 0.2s ease;
+    transition: color 0.2s ease;
   }
 
   .chat-input-wrapper .message-action-button:hover {
     color: rgba(255, 255, 255, 0.9);
-    background: rgba(255, 255, 255, 0.1);
   }
 
   .send-button {
@@ -613,6 +654,90 @@
     color: var(--text-primary);
     font-size: 1.2rem;
     font-weight: 500;
+  }
+
+  .tooltips-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    padding: 1rem;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .tooltip-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    color: #fff;
+    font-size: 0.875rem;
+    text-align: left;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    width: 100%;
+    white-space: normal;
+    line-height: 1.4;
+  }
+
+  .tooltip-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .tooltip-button:active {
+    transform: translateY(0);
+  }
+
+  /* Dark theme adjustments */
+  .dark .tooltip-button {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .tooltip-button:hover {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 640px) {
+    .chat-container {
+      max-width: 100%;
+    }
+
+    .chat-input-container,
+    .chat-input-wrapper {
+      max-width: 100%;
+    }
+
+    .tooltips-container {
+      grid-template-columns: 1fr;
+    }
+
+    .chat-input-container {
+      padding: 12px;
+    }
+
+    .chat-input-wrapper {
+      padding: 6px;
+      gap: 4px;
+    }
+
+    .chat-input {
+      font-size: 16px;
+    }
+
+    .chat-input-wrapper .message-action-button,
+    .chat-input-wrapper .send-button {
+      width: 28px;
+      height: 28px;
+      padding: 2px;
+    }
   }
 }
 

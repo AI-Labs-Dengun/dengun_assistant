@@ -93,6 +93,12 @@ export const translations = {
     photoUploadError: 'Failed to upload photo. Your account will be created without a profile photo.',
     photoUploadCorsError: 'Unable to upload photo due to security restrictions. Please try again or contact support if the issue persists.',
 
+    // Comment Modal
+    addComment: 'Add Comment',
+    writeComment: 'Write your comment...',
+    submit: 'Submit',
+    cancel: 'Cancel',
+
   },
   pt: {
     // Chat UI
@@ -186,6 +192,12 @@ export const translations = {
     cancel: 'Cancelar',
     apply: 'Aplicar',
     photoUploadError: 'Falha ao fazer upload da foto. Sua conta será criada sem uma foto de perfil.',
+
+    // Comment Modal
+    addComment: 'Adicionar Comentário',
+    writeComment: 'Escreva o seu comentário...',
+    submit: 'Enviar',
+    cancel: 'Cancelar',
 
   },
   es: {
@@ -281,6 +293,12 @@ export const translations = {
     apply: 'Aplicar',
     photoUploadError: 'Error al subir la foto. Tu cuenta se creará sin foto de perfil.',
 
+    // Comment Modal
+    addComment: 'Añadir Comentario',
+    writeComment: 'Escribe tu comentario...',
+    submit: 'Enviar',
+    cancel: 'Cancelar',
+
   },
   fr: {
     // Chat UI
@@ -372,7 +390,14 @@ export const translations = {
     cropInstructions: 'Faites glisser pour repositionner et utilisez les poignées pour redimensionner',
     cropMe: 'Recadrer',
     cancel: 'Annuler',
-    apply: 'Appliquer'
+    apply: 'Appliquer',
+
+    // Comment Modal
+    addComment: 'Ajouter un Commentaire',
+    writeComment: 'Écrivez votre commentaire...',
+    submit: 'Envoyer',
+    cancel: 'Annuler',
+
   },
   de: {
     // Chat UI
@@ -464,7 +489,14 @@ export const translations = {
     cropInstructions: 'Ziehen Sie zum Neupositionieren und nutzen Sie die Griffe zum Größenändern',
     cropMe: 'Zuschneiden',
     cancel: 'Abbrechen',
-    apply: 'Anwenden'
+    apply: 'Anwenden',
+
+    // Comment Modal
+    addComment: 'Kommentar Hinzufügen',
+    writeComment: 'Schreiben Sie Ihren Kommentar...',
+    submit: 'Absenden',
+    cancel: 'Abbrechen',
+
   },
   it: {
     // Chat UI
@@ -556,7 +588,14 @@ export const translations = {
     cropInstructions: 'Trascina per riposizionare e usa le maniglie per ridimensionare',
     cropMe: 'Ritaglia',
     cancel: 'Annulla',
-    apply: 'Applica'
+    apply: 'Applica',
+
+    // Comment Modal
+    addComment: 'Aggiungi Commento',
+    writeComment: 'Scrivi il tuo commento...',
+    submit: 'Invia',
+    cancel: 'Annulla',
+
   },
   zh: {
     // Chat UI
@@ -648,7 +687,14 @@ export const translations = {
     cropInstructions: '拖动重新定位，使用手柄调整大小',
     cropMe: '裁剪',
     cancel: '取消',
-    apply: '应用'
+    apply: '应用',
+
+    // Comment Modal
+    addComment: '添加评论',
+    writeComment: '写下您的评论...',
+    submit: '提交',
+    cancel: '取消',
+
   },
   hi: {
     // Chat UI
@@ -744,6 +790,12 @@ export const translations = {
     photoUploadError: 'Failed to upload photo. Your account will be created without a profile photo.',
     photoUploadCorsError: 'Unable to upload photo due to security restrictions. Please try again or contact support if the issue persists.',
 
+    // Comment Modal
+    addComment: 'टिप्पणी जोड़ें',
+    writeComment: 'अपनी टिप्पणी लिखें...',
+    submit: 'भेजें',
+    cancel: 'रद्द करें',
+
   },
   ru: {
     // Chat UI
@@ -835,7 +887,14 @@ export const translations = {
     cropInstructions: 'Перетащите для изменения положения и используйте маркеры для изменения размера',
     cropMe: 'Обрезать',
     cancel: 'Отмена',
-    apply: 'Применить'
+    apply: 'Применить',
+
+    // Comment Modal
+    addComment: 'Добавить комментарий',
+    writeComment: 'Напишите свой комментарий...',
+    submit: 'Отправить',
+    cancel: 'Отмена',
+
   },
   ja: {
     // Chat UI
@@ -929,6 +988,13 @@ export const translations = {
     cancel: 'キャンセル',
     apply: '適用',
     photoUploadError: 'Failed to upload photo. Your account will be created without a profile photo.',
-    photoUploadCorsError: 'Unable to upload photo due to security restrictions. Please try again or contact support if the issue persists.'
+    photoUploadCorsError: 'Unable to upload photo due to security restrictions. Please try again or contact support if the issue persists.',
+
+    // Comment Modal
+    addComment: 'コメントを追加',
+    writeComment: 'コメントを書く...',
+    submit: '送信',
+    cancel: 'キャンセル',
+
   }
 }; 
