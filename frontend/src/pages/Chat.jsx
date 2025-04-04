@@ -15,6 +15,7 @@ import aiInstructions from '../../../instructions/instructions-general.txt';
 import aiKnowledge from '../../../knowledge/knowledge-general.txt';
 import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import './Chat.css';
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
@@ -678,8 +679,9 @@ function Chat() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [instructions, setInstructions] = useState('');
   const [knowledge, setKnowledge] = useState('');
-  const [selectedTooltips, setSelectedTooltips] = useState([]);
-  const [showTooltips, setShowTooltips] = useState(true);
+  const [showSuggestedMessages, setShowSuggestedMessages] = useState(true);
+  const [isSuggestedMessagesOpen, setIsSuggestedMessagesOpen] = useState(false);
+  const [currentTooltips, setCurrentTooltips] = useState([]);
 
   useEffect(() => {
     // Apply theme on component mount and when theme changes
@@ -916,9 +918,6 @@ function Chat() {
         console.error('Error loading AI files:', error);
       }
 
-      // Select random tooltips on initialization
-      setSelectedTooltips(selectRandomTooltips(detectedLanguage));
-
       setIsInitializing(false);
     };
 
@@ -972,7 +971,8 @@ function Chat() {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
     
-    hideTooltips(); // Hide tooltips when user sends a message
+    // Hide the suggested messages button when user sends a message
+    setShowSuggestedMessages(false);
     
     const userMessage = {
       role: 'user',
@@ -1467,11 +1467,42 @@ function Chat() {
     }
   };
 
+  // Function to hide tooltips
+  const hideTooltips = () => {
+    setShowSuggestedMessages(false);
+  };
+
   // Function to randomly select 4 tooltips based on current language
   const selectRandomTooltips = (language) => {
-    const availableTooltips = tooltips[language] || tooltips['en']; // fallback to English
+    // Ensure we have a valid language and tooltips for that language
+    const availableTooltips = tooltips[language] || tooltips['en'] || [];
+    
+    // If no tooltips are available, return an empty array
+    if (!Array.isArray(availableTooltips) || availableTooltips.length === 0) {
+      console.warn(`No tooltips available for language: ${language}`);
+      return [];
+    }
+
+    // Shuffle and select 4 tooltips
     const shuffled = [...availableTooltips].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, 4);
+  };
+
+  const handleSuggestedMessagesClick = (e) => {
+    e.preventDefault(); // Prevent form submission
+    setIsSuggestedMessagesOpen(true);
+    const randomTooltips = selectRandomTooltips(currentLanguage);
+    setCurrentTooltips(randomTooltips);
+  };
+
+  const handleSuggestedMessagesClose = () => {
+    setIsSuggestedMessagesOpen(false);
+  };
+
+  const handleSuggestedMessageSelect = (messageText) => {
+    handleTooltipClick(messageText);
+    setIsSuggestedMessagesOpen(false);
+    setShowSuggestedMessages(false);
   };
 
   const handleTooltipClick = async (tooltipText) => {
@@ -1525,18 +1556,6 @@ function Chat() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Update tooltips when language changes
-  useEffect(() => {
-    if (currentLanguage) {
-      setSelectedTooltips(selectRandomTooltips(currentLanguage));
-    }
-  }, [currentLanguage]);
-
-  // Function to hide tooltips
-  const hideTooltips = () => {
-    setShowTooltips(false);
   };
 
   if (isInitializing) {
@@ -1637,18 +1656,14 @@ function Chat() {
         </div>
 
         <form onSubmit={handleSubmit} className="chat-input-container">
-          {showTooltips && (
-            <div className="tooltips-container">
-              {selectedTooltips.map((tooltip) => (
-                <button
-                  key={tooltip.id}
-                  className="tooltip-button"
-                  onClick={() => handleTooltipClick(tooltip.text)}
-                >
-                  {tooltip.text}
-                </button>
-              ))}
-            </div>
+          {showSuggestedMessages && (
+            <button 
+              type="button" // Add type="button" to prevent form submission
+              className="suggested-messages-button"
+              onClick={handleSuggestedMessagesClick}
+            >
+              {t('suggestedMessages')}
+            </button>
           )}
           <div className="chat-input-wrapper">
             <div className="emoji-picker-container" ref={emojiPickerRef}>
@@ -1742,6 +1757,35 @@ function Chat() {
         isPaused={isPaused}
         onSkip={handlePauseResume}
       />
+      {isSuggestedMessagesOpen && (
+        <div className="suggested-messages-modal">
+          <div className="suggested-messages-content">
+            <div className="suggested-messages-header">
+              <h3>{t('suggestedMessages')}</h3>
+              <button 
+                className="modal-close"
+                onClick={handleSuggestedMessagesClose}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div className="suggested-messages-grid">
+              {currentTooltips && currentTooltips.map((tooltip, index) => (
+                <div
+                  key={tooltip.id || index}
+                  className="suggested-message-item"
+                  onClick={() => handleSuggestedMessageSelect(tooltip.text)}
+                >
+                  {tooltip.text}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,50 @@
+.suggested-messages-button {
+  background: var(--glass-background);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: white;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0 auto 12px;
+  width: fit-content;
+  min-width: 140px;
+  max-width: 200px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: block;
+}
+
+.suggested-messages-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+}
+
+.suggested-messages-button:active {
+  transform: translateY(0);
+}
+
+/* Dark theme specific styles */
+.dark .suggested-messages-button {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.dark .suggested-messages-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Light theme specific styles */
+.light .suggested-messages-button {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.light .suggested-messages-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+} 

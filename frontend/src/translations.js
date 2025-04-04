@@ -99,6 +99,9 @@ export const translations = {
     submit: 'Submit',
     cancel: 'Cancel',
 
+    // Suggested Messages
+    suggestedMessages: 'Suggested Messages',
+
   },
   pt: {
     // Chat UI
@@ -198,6 +201,9 @@ export const translations = {
     writeComment: 'Escreva o seu comentário...',
     submit: 'Enviar',
     cancel: 'Cancelar',
+
+    // Suggested Messages
+    suggestedMessages: 'Mensagens Sugeridas',
 
   },
   es: {
@@ -299,6 +305,9 @@ export const translations = {
     submit: 'Enviar',
     cancel: 'Cancelar',
 
+    // Suggested Messages
+    suggestedMessages: 'Mensajes Sugeridos',
+
   },
   fr: {
     // Chat UI
@@ -397,6 +406,9 @@ export const translations = {
     writeComment: 'Écrivez votre commentaire...',
     submit: 'Envoyer',
     cancel: 'Annuler',
+
+    // Suggested Messages
+    suggestedMessages: 'Messages Suggérés',
 
   },
   de: {
@@ -497,6 +509,9 @@ export const translations = {
     submit: 'Absenden',
     cancel: 'Abbrechen',
 
+    // Suggested Messages
+    suggestedMessages: 'Vorgeschlagene Nachrichten',
+
   },
   it: {
     // Chat UI
@@ -596,6 +611,9 @@ export const translations = {
     submit: 'Invia',
     cancel: 'Annulla',
 
+    // Suggested Messages
+    suggestedMessages: 'Messaggi Suggeriti',
+
   },
   zh: {
     // Chat UI
@@ -694,6 +712,9 @@ export const translations = {
     writeComment: '写下您的评论...',
     submit: '提交',
     cancel: '取消',
+
+    // Suggested Messages
+    suggestedMessages: '建议消息',
 
   },
   hi: {
@@ -796,6 +817,9 @@ export const translations = {
     submit: 'भेजें',
     cancel: 'रद्द करें',
 
+    // Suggested Messages
+    suggestedMessages: 'सुझाए गए संदेश',
+
   },
   ru: {
     // Chat UI
@@ -894,6 +918,9 @@ export const translations = {
     writeComment: 'Напишите свой комментарий...',
     submit: 'Отправить',
     cancel: 'Отмена',
+
+    // Suggested Messages
+    suggestedMessages: 'Предложенные сообщения',
 
   },
   ja: {
@@ -995,6 +1022,9 @@ export const translations = {
     writeComment: 'コメントを書く...',
     submit: '送信',
     cancel: 'キャンセル',
+
+    // Suggested Messages
+    suggestedMessages: 'おすすめメッセージ',
 
   }
 }; 
