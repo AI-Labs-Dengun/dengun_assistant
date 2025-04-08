@@ -28,17 +28,7 @@ function Settings({ isOpen, onClose, onThemeChange, onVoiceChange, selectedVoice
     }
 
     try {
-      // Get a sample message in the user's language
-      const browserLang = navigator.language || navigator.userLanguage;
-      const langCode = browserLang.split('-')[0];
-      
-      const sampleMessages = {
-        'pt': t('sampleVoice'),
-        'en': t('sampleVoice'),
-        'es': t('sampleVoice')
-      };
-
-      const sampleMessage = sampleMessages[langCode] || sampleMessages['en'];
+      const sampleMessage = t('sampleVoice');
 
       // Generate audio with the new voice
       const response = await openai.audio.speech.create({

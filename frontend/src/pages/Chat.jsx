@@ -660,6 +660,7 @@ function Chat() {
   const [feedback, setFeedback] = useState({});
   const [comments, setComments] = useState({});
   const [isAudioLoading, setIsAudioLoading] = useState({});
+  const [currentlyPlayingMessageId, setCurrentlyPlayingMessageId] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
   const inputRef = useRef(null);
@@ -670,6 +671,7 @@ function Chat() {
   const [isPlayingLastMessage, setIsPlayingLastMessage] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isPreparingVoiceAudio, setIsPreparingVoiceAudio] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const audioStreamRef = useRef(null);
@@ -682,6 +684,12 @@ function Chat() {
   const [showSuggestedMessages, setShowSuggestedMessages] = useState(true);
   const [isSuggestedMessagesOpen, setIsSuggestedMessagesOpen] = useState(false);
   const [currentTooltips, setCurrentTooltips] = useState([]);
+  const currentMessageAudioRef = useRef(null);
+  // New state variables for contact information
+  const [userPhone, setUserPhone] = useState('');
+  const [contactInfoDetected, setContactInfoDetected] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const messagesContainerRef = useRef(null);
 
   useEffect(() => {
     // Apply theme on component mount and when theme changes
@@ -699,238 +707,128 @@ function Chat() {
 
   useEffect(() => {
     const initializeChat = async () => {
-      const email = localStorage.getItem('userEmail');
-      if (!email) {
-        navigate('/');
-        return;
-      }
-      setUserEmail(email);
-
-      // Load user's profile photo
       try {
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where("email", "==", email));
-        const querySnapshot = await getDocs(q);
+        // Check if API key is available
+        const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+        console.log("API Key available:", !!apiKey);
         
-        if (!querySnapshot.empty) {
-          const userData = querySnapshot.docs[0].data();
-          if (userData.photoUrl) {
-            setUserPhotoUrl(userData.photoUrl);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading user photo:', error);
-      }
-
-      // Load saved voice preference
-      const savedVoice = localStorage.getItem('selectedVoice') || 'alloy';
-      setSelectedVoice(savedVoice);
-
-      // Check for secure context and proper API support
-      try {
-        // Check if we're in a secure context
-        if (!window.isSecureContext) {
-          throw new Error('Microphone access requires a secure context (HTTPS or localhost)');
-        }
-
-        // Check if mediaDevices API is supported
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error('Media devices API is not supported in this browser');
-        }
-
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        audioStreamRef.current = stream;
-
-        // Check if MediaRecorder is supported
-        if (typeof MediaRecorder === 'undefined') {
-          throw new Error('MediaRecorder is not supported in this browser');
-        }
-
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = mediaRecorder;
+        // Mask the API key for logging (only show first 4 and last 4 characters)
+        const maskedKey = apiKey 
+          ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}`
+          : "not available";
+        console.log("Masked API Key:", maskedKey);
         
-        mediaRecorder.ondataavailable = (event) => {
-          console.log('Audio data available');
-          audioChunksRef.current.push(event.data);
-        };
+        // Check for user authentication
+        if (!apiKey) {
+          throw new Error('OpenAI API key is not available');
+        }
 
-        mediaRecorder.onstop = async () => {
-          console.log('Recording stopped, processing audio...');
-          setIsTranscribing(true);
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-          audioChunksRef.current = [];
+        const email = localStorage.getItem('userEmail');
+        if (!email) {
+          navigate('/');
+          return;
+        }
+        setUserEmail(email);
+
+        // Load user's profile photo
+        try {
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where("email", "==", email));
+          const querySnapshot = await getDocs(q);
           
-          try {
-            // Get the current language from the translation hook
-            const currentLang = currentLanguage;
-            console.log('Using language for transcription:', currentLang);
-
-            // Send audio to Whisper API with language detection
-            const formData = new FormData();
-            formData.append('file', audioBlob, 'audio.wav');
-            formData.append('model', 'whisper-1');
-            formData.append('response_format', 'json');
-
-            console.log('Sending audio to Whisper API...');
-            const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-              },
-              body: formData
-            });
-
-            if (!response.ok) {
-              throw new Error('Transcription failed');
+          if (!querySnapshot.empty) {
+            const userData = querySnapshot.docs[0].data();
+            if (userData.photoUrl) {
+              setUserPhotoUrl(userData.photoUrl);
             }
-
-            const data = await response.json();
-            const transcript = data.text;
-            console.log('Transcription received:', transcript);
-            
-            if (transcript.trim()) {
-              // Add user message to chat
-              const userMessage = {
-                role: 'user',
-                content: transcript,
-                timestamp: new Date()
-              };
-              setMessages(prev => [...prev, userMessage]);
-
-              // Get AI response in the same language as the user's message
-              const aiResponse = await openai.chat.completions.create({
-                model: "gpt-4",
-                messages: [
-                  {
-                    role: "system",
-                    content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nImportant: You MUST detect and respond in the EXACT SAME language as the user's message. DO NOT translate anything. If the user speaks in Portuguese, you MUST respond in Portuguese. If they speak in Spanish, respond in Spanish. If in English, respond in English. Never translate to English.`
-                  },
-                  ...messages.concat(userMessage).map(msg => ({
-                    role: msg.role,
-                    content: msg.content
-                  }))
-                ],
-                temperature: 0.7,
-                max_tokens: 1000
-              });
-
-              const assistantMessage = {
-                role: 'assistant',
-                content: aiResponse.choices[0].message.content,
-                timestamp: new Date()
-              };
-
-              // Add AI response to chat
-              setMessages(prev => [...prev, assistantMessage]);
-
-              // Set AI speaking state and play the response
-              setIsPlayingLastMessage(true);
-              setIsPaused(false);
-              try {
-                const response = await openai.audio.speech.create({
-                  model: "tts-1",
-                  voice: selectedVoice,
-                  input: assistantMessage.content
-                });
-
-                const audioData = await response.blob();
-                const url = URL.createObjectURL(audioData);
-                const audio = new Audio(url);
-                currentAudioRef.current = audio;
-                
-                audio.onended = () => {
-                  URL.revokeObjectURL(url);
-                  setIsPlayingLastMessage(false);
-                  setIsPaused(false);
-                };
-
-                audio.play().catch((error) => {
-                  console.error('Error playing audio:', error);
-                  setIsPlayingLastMessage(false);
-                  setIsPaused(false);
-                });
-
-              } catch (error) {
-                console.error('Error playing AI response:', error);
-                setIsPlayingLastMessage(false);
-                setIsPaused(false);
-              }
-            }
-          } catch (error) {
-            console.error('Error transcribing audio:', error);
-            alert(t('errorTranscribeAudio'));
-          } finally {
-            setIsTranscribing(false);
           }
+        } catch (error) {
+          console.error('Error loading user photo:', error);
+        }
+
+        // Load saved voice preference
+        const savedVoice = localStorage.getItem('selectedVoice') || 'alloy';
+        setSelectedVoice(savedVoice);
+
+        // Check for secure context and proper API support
+        try {
+          // Check if we're in a secure context
+          if (!window.isSecureContext) {
+            throw new Error('Microphone access requires a secure context (HTTPS or localhost)');
+          }
+
+          // Check if mediaDevices API is supported
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Media devices API is not supported in this browser');
+          }
+
+          // Check if MediaRecorder is supported
+          if (typeof MediaRecorder === 'undefined') {
+            throw new Error('MediaRecorder is not supported in this browser');
+          }
+
+        } catch (error) {
+          console.error('Error checking audio support:', error);
+        }
+
+        // Detect browser language and set it as the user's language
+        const browserLang = navigator.language || navigator.userLanguage;
+        const langCode = browserLang.split('-')[0];
+        // Map language codes to supported languages
+        const languageMap = {
+          'en': 'en', // English
+          'es': 'es', // Spanish
+          'pt': 'pt', // Portuguese
+          'fr': 'fr', // French
+          'de': 'de', // German
+          'it': 'it', // Italian
+          'zh': 'zh', // Chinese
+          'hi': 'hi', // Hindi
+          'ru': 'ru', // Russian
+          'ja': 'ja'  // Japanese
         };
+        const detectedLanguage = languageMap[langCode] || 'en';
+        setUserLanguage(detectedLanguage);
+        console.log('Detected language:', detectedLanguage);
 
-        mediaRecorder.onstart = () => {
-          console.log('Recording started');
-        };
+        // Wait for instructions to load before showing welcome message
+        try {
+          const [instructionsResponse, knowledgeResponse] = await Promise.all([
+            fetch(aiInstructions),
+            fetch(aiKnowledge)
+          ]);
+          
+          const [instructionsText, knowledgeText] = await Promise.all([
+            instructionsResponse.text(),
+            knowledgeResponse.text()
+          ]);
 
+          setInstructions(instructionsText);
+          setKnowledge(knowledgeText);
+
+          // Add initial welcome message using instructions
+          const welcomeMessage = await getLocalizedWelcomeMessage(detectedLanguage, instructionsText);
+          setMessages([{
+            role: 'assistant',
+            content: welcomeMessage,
+            timestamp: new Date()
+          }]);
+        } catch (error) {
+          console.error('Error loading AI files:', error);
+        }
+
+        setIsInitializing(false);
       } catch (error) {
-        console.error('Error accessing microphone:', error);
+        console.error('Error initializing chat:', error);
+        setIsInitializing(false);
       }
-
-      // Detect browser language and set it as the user's language
-      const browserLang = navigator.language || navigator.userLanguage;
-      const langCode = browserLang.split('-')[0];
-      // Map language codes to supported languages
-      const languageMap = {
-        'en': 'en', // English
-        'es': 'es', // Spanish
-        'pt': 'pt', // Portuguese
-        'fr': 'fr', // French
-        'de': 'de', // German
-        'it': 'it', // Italian
-        'zh': 'zh', // Chinese
-        'hi': 'hi', // Hindi
-        'ru': 'ru', // Russian
-        'ja': 'ja'  // Japanese
-      };
-      const detectedLanguage = languageMap[langCode] || 'en';
-      setUserLanguage(detectedLanguage);
-      console.log('Detected language:', detectedLanguage);
-
-      // Wait for instructions to load before showing welcome message
-      try {
-        const [instructionsResponse, knowledgeResponse] = await Promise.all([
-          fetch(aiInstructions),
-          fetch(aiKnowledge)
-        ]);
-        
-        const [instructionsText, knowledgeText] = await Promise.all([
-          instructionsResponse.text(),
-          knowledgeResponse.text()
-        ]);
-
-        setInstructions(instructionsText);
-        setKnowledge(knowledgeText);
-
-        // Add initial welcome message using instructions
-        const welcomeMessage = await getLocalizedWelcomeMessage(detectedLanguage, instructionsText);
-        setMessages([{
-          role: 'assistant',
-          content: welcomeMessage,
-          timestamp: new Date()
-        }]);
-      } catch (error) {
-        console.error('Error loading AI files:', error);
-      }
-
-      setIsInitializing(false);
     };
 
     initializeChat();
 
     // Cleanup function
     return () => {
-      if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach(track => track.stop());
-      }
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
-      }
+      handleVoicePopupClose();
     };
   }, [navigate]);
 
@@ -941,7 +839,7 @@ function Chat() {
         messages: [
           {
             role: "system",
-            content: `Instructions: ${instructions}\nLanguage: ${langCode}\nImportant: Respond in the same language as the user's language (${langCode}). If the user's language is Portuguese, respond in Portuguese.`
+            content: `Instructions: ${instructions}\nLanguage: ${langCode}\nImportant: Respond in the same language as the user's language (${langCode}). If the user's language is Portuguese, respond in Portuguese. Provide a warm and welcoming greeting that establishes trust and creates a conversation flow that will naturally lead to asking for contact information later.`
           },
           {
             role: "user",
@@ -949,7 +847,7 @@ function Chat() {
           }
         ],
         temperature: 0.7,
-        max_tokens: 100
+        max_tokens: 150
       });
       return response.choices[0].message.content;
     } catch (error) {
@@ -984,13 +882,26 @@ function Chat() {
     setInputMessage('');
     setIsLoading(true);
 
+    // Check if the message contains contact information
+    const contactInfo = detectContactInfo(userMessage.content);
+    
+    // If contact info is detected and we haven't processed it yet
+    if (contactInfo && contactInfo.hasContactInfo && !contactInfoDetected && !emailSent) {
+      console.log('Contact information detected:', contactInfo);
+      setContactInfoDetected(true);
+      // Process in background while the conversation continues
+      sendContactEmail(contactInfo).catch(error => 
+        console.error('Error in background contact processing:', error)
+      );
+    }
+
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4",
         messages: [
           {
             role: "system",
-            content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}`
+            content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}\nImportant: Actively ask for the user's contact information (email and/or phone) during the conversation in a natural way.`
           },
           ...messages.concat(userMessage).map(msg => ({
             role: msg.role,
@@ -1038,9 +949,34 @@ function Chat() {
 
   const handlePlayAudio = async (messageId, content) => {
     try {
+      // If this message is currently playing, stop it
+      if (currentlyPlayingMessageId === messageId) {
+        if (currentMessageAudioRef.current) {
+          currentMessageAudioRef.current.pause();
+          currentMessageAudioRef.current.currentTime = 0;
+          URL.revokeObjectURL(currentMessageAudioRef.current.src);
+          currentMessageAudioRef.current = null;
+        }
+        setCurrentlyPlayingMessageId(null);
+        setIsAudioLoading(prev => ({ ...prev, [messageId]: false }));
+        return;
+      }
+
+      // If another message is playing, stop that one first
+      if (currentlyPlayingMessageId && currentlyPlayingMessageId !== messageId) {
+        if (currentMessageAudioRef.current) {
+          currentMessageAudioRef.current.pause();
+          currentMessageAudioRef.current.currentTime = 0;
+          URL.revokeObjectURL(currentMessageAudioRef.current.src);
+          currentMessageAudioRef.current = null;
+        }
+        setIsAudioLoading(prev => ({ ...prev, [currentlyPlayingMessageId]: false }));
+      }
+
+      // Set loading state immediately when button is clicked
       setIsAudioLoading(prev => ({ ...prev, [messageId]: true }));
       
-      // Cancel any ongoing speech
+      // Cancel any ongoing speech synthesis
       window.speechSynthesis.cancel();
 
       // OpenAI TTS implementation
@@ -1054,19 +990,51 @@ function Chat() {
       const audioData = await response.blob();
       const url = URL.createObjectURL(audioData);
       
-      // Create and play audio
+      // Create audio object
       const audio = new Audio(url);
-      audio.play();
-
-      // Cleanup
+      currentMessageAudioRef.current = audio;
+      
+      // Set up event listeners before starting playback
+      
+      // Once audio is actually playing, update the playing state
+      audio.onplaying = () => {
+        setCurrentlyPlayingMessageId(messageId);
+        setIsAudioLoading(prev => ({ ...prev, [messageId]: false }));
+      };
+      
+      // When audio ends, clean up everything
       audio.onended = () => {
         URL.revokeObjectURL(url);
         setIsAudioLoading(prev => ({ ...prev, [messageId]: false }));
+        setCurrentlyPlayingMessageId(null);
+        currentMessageAudioRef.current = null;
       };
+      
+      // Handle any errors during playback
+      audio.onerror = () => {
+        console.error('Error during audio playback');
+        URL.revokeObjectURL(url);
+        setIsAudioLoading(prev => ({ ...prev, [messageId]: false }));
+        setCurrentlyPlayingMessageId(null);
+        currentMessageAudioRef.current = null;
+      };
+      
+      // Start playing the audio
+      try {
+        await audio.play();
+      } catch (playError) {
+        console.error('Error playing audio:', playError);
+        setIsAudioLoading(prev => ({ ...prev, [messageId]: false }));
+        setCurrentlyPlayingMessageId(null);
+        currentMessageAudioRef.current = null;
+      }
 
     } catch (error) {
-      console.error('Error playing audio:', error);
+      console.error('Error getting audio from API:', error);
       setIsAudioLoading(prev => ({ ...prev, [messageId]: false }));
+      setCurrentlyPlayingMessageId(null);
+      currentMessageAudioRef.current = null;
+      
       // Fallback to browser's speech synthesis if OpenAI TTS fails
       const utterance = new SpeechSynthesisUtterance(content);
       window.speechSynthesis.speak(utterance);
@@ -1140,18 +1108,24 @@ function Chat() {
     const currentFeedback = feedback[messageId];
     const hasComment = !!comments[messageId];
     const isLoading = isAudioLoading[messageId];
+    const isPlaying = currentlyPlayingMessageId === messageId;
 
     return (
       <div className="message-actions">
         <button 
-          className={`message-action-button ${isLoading ? 'loading' : ''}`}
+          className={`message-action-button ${isLoading ? 'loading' : ''} ${isPlaying ? 'playing' : ''}`}
           onClick={() => handlePlayAudio(messageId, message.content)}
-          title={t('playAudio')}
-          disabled={isLoading}
+          title={isPlaying ? t('stopAudio') : isLoading ? t('preparingAudio') : t('playAudio')}
+          disabled={isLoading && !isPlaying}
         >
-          {isLoading ? (
+          {isLoading && !isPlaying ? (
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+          ) : isPlaying ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
             </svg>
           ) : (
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1232,181 +1206,69 @@ function Chat() {
   };
 
   const handleVoicePopupClose = () => {
+    console.log("Closing voice popup and cleaning up resources...");
+    
+    // First set closing flags immediately to prevent interaction during cleanup
+    setIsVoicePopupOpen(false);
+    
     // Stop any playing audio and cleanup
     if (currentAudioRef.current) {
+      console.log("Cleaning up audio element...");
       currentAudioRef.current.pause();
       currentAudioRef.current.currentTime = 0;
-      URL.revokeObjectURL(currentAudioRef.current.src);
+      if (currentAudioRef.current.src) {
+        URL.revokeObjectURL(currentAudioRef.current.src);
+      }
       currentAudioRef.current = null;
     }
 
-    // Reset all voice-related states
-    setIsPlayingLastMessage(false);
-    setIsPaused(false);
-    setIsVoicePopupOpen(false);
-    setIsRecording(false);
-    setIsTranscribing(false);
-
     // Clean up any ongoing recording
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-    if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach(track => track.stop());
-      audioStreamRef.current = null;
-    }
-  };
-
-  const handleStartRecording = async () => {
-    hideTooltips(); // Hide tooltips when user starts voice recording
-    try {
-      // Always get a new stream and create a new MediaRecorder
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioStreamRef.current = stream;
-      const mediaRecorder = new MediaRecorder(stream);
-      
-      mediaRecorder.ondataavailable = (event) => {
-        console.log('Audio data available');
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        console.log('Recording stopped, processing audio...');
-        setIsTranscribing(true);
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        audioChunksRef.current = [];
-        
-        try {
-          // Send audio to Whisper API with language detection
-          const formData = new FormData();
-          formData.append('file', audioBlob, 'audio.wav');
-          formData.append('model', 'whisper-1');
-          formData.append('response_format', 'json');
-
-          console.log('Sending audio to Whisper API...');
-          const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-            },
-            body: formData
-          });
-
-          if (!response.ok) {
-            throw new Error('Transcription failed');
-          }
-
-          const data = await response.json();
-          const transcript = data.text;
-          console.log('Transcription received:', transcript);
-          
-          if (transcript.trim()) {
-            // Add user message to chat
-            const userMessage = {
-              role: 'user',
-              content: transcript,
-              timestamp: new Date()
-            };
-            setMessages(prev => [...prev, userMessage]);
-
-            // Get AI response in the same language as the user's message
-            const aiResponse = await openai.chat.completions.create({
-              model: "gpt-4",
-              messages: [
-                {
-                  role: "system",
-                  content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nImportant: You MUST detect and respond in the EXACT SAME language as the user's message. DO NOT translate anything. If the user speaks in Portuguese, you MUST respond in Portuguese. If they speak in Spanish, respond in Spanish. If in English, respond in English. Never translate to English.`
-                },
-                ...messages.concat(userMessage).map(msg => ({
-                  role: msg.role,
-                  content: msg.content
-                }))
-              ],
-              temperature: 0.7,
-              max_tokens: 1000
-            });
-
-            const assistantMessage = {
-              role: 'assistant',
-              content: aiResponse.choices[0].message.content,
-              timestamp: new Date()
-            };
-
-            // Add AI response to chat
-            setMessages(prev => [...prev, assistantMessage]);
-
-            // Play the AI response
-            setIsPlayingLastMessage(true);
-            setIsPaused(false);
-            try {
-              const response = await openai.audio.speech.create({
-                model: "tts-1",
-                voice: selectedVoice,
-                input: assistantMessage.content
-              });
-
-              const audioData = await response.blob();
-              const url = URL.createObjectURL(audioData);
-              const audio = new Audio(url);
-              currentAudioRef.current = audio;
-              
-              audio.onended = () => {
-                URL.revokeObjectURL(url);
-                setIsPlayingLastMessage(false);
-                setIsPaused(false);
-              };
-
-              audio.play().catch((error) => {
-                console.error('Error playing audio:', error);
-                setIsPlayingLastMessage(false);
-                setIsPaused(false);
-              });
-            } catch (error) {
-              console.error('Error playing AI response:', error);
-              setIsPlayingLastMessage(false);
-              setIsPaused(false);
-            }
-          }
-        } catch (error) {
-          console.error('Error transcribing audio:', error);
-          alert(t('errorTranscribeAudio'));
-        } finally {
-          setIsTranscribing(false);
+    if (mediaRecorderRef.current) {
+      console.log("Cleaning up media recorder...");
+      try {
+        if (mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
         }
-      };
-
-      mediaRecorderRef.current = mediaRecorder;
-      console.log('Starting recording...');
-      audioChunksRef.current = [];
-      mediaRecorder.start(1000); // Collect data every second
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      setIsRecording(false);
-      alert(t('errorStartRecording'));
-    }
-  };
-
-  const handleStopRecording = async () => {
-    try {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        console.log('Stopping recording...');
-        mediaRecorderRef.current.stop();
-        setIsRecording(false);
-        
-        // Stop the audio stream tracks and clear the recorder
-        if (audioStreamRef.current) {
-          audioStreamRef.current.getTracks().forEach(track => track.stop());
-          audioStreamRef.current = null;
-        }
+        mediaRecorderRef.current = null;
+      } catch (error) {
+        console.error('Error stopping mediaRecorder:', error);
       }
-    } catch (error) {
-      console.error('Error stopping recording:', error);
-      alert(t('errorStopRecording'));
     }
+
+    // Clean up audio stream
+    if (audioStreamRef.current) {
+      console.log("Stopping audio tracks...");
+      try {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        audioStreamRef.current = null;
+      } catch (error) {
+        console.error('Error stopping audio tracks:', error);
+      }
+    }
+
+    // Clear any stored audio chunks and reset time
+    audioChunksRef.current = [];
+    audioStartTimeRef.current = 0;
+
+    // Reset all voice-related states with a small delay to ensure cleanup is complete
+    // This also prevents rapid reopening which could cause issues
+    setTimeout(() => {
+      console.log("Resetting all voice states...");
+      setIsPlayingLastMessage(false);
+      setIsPaused(false);
+      setIsRecording(false);
+      setIsTranscribing(false);
+      setIsPreparingVoiceAudio(false);
+    }, 300);
   };
 
   const handleMicClick = async () => {
+    // Prevent multiple clicks while processing
+    if (isLoading || isPlayingLastMessage || isPreparingVoiceAudio) {
+      console.log('Voice interaction is busy, please wait...');
+      return;
+    }
+
     if (!window.isSecureContext) {
       alert(t('errorMicrophone'));
       return;
@@ -1422,48 +1284,379 @@ function Chat() {
       return;
     }
 
-    setIsVoicePopupOpen(true);
-
-    // Get the last AI message
-    const lastAiMessage = messages
-      .slice()
-      .reverse()
-      .find(msg => msg.role === 'assistant');
-
-    if (lastAiMessage) {
-      setIsPlayingLastMessage(true);
-      try {
-        // Play the last message
-        const response = await openai.audio.speech.create({
-          model: "tts-1",
-          voice: selectedVoice,
-          input: lastAiMessage.content
-        });
-
-        const audioData = await response.blob();
-        const url = URL.createObjectURL(audioData);
-        const audio = new Audio(url);
-        currentAudioRef.current = audio;
-        
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-          setIsPlayingLastMessage(false);
-          setIsPaused(false);
-        };
-
-        audio.play().catch((error) => {
-          console.error('Error playing audio:', error);
-          setIsPlayingLastMessage(false);
-          setIsPaused(false);
-        });
-      } catch (error) {
-        console.error('Error playing last message:', error);
-        setIsPlayingLastMessage(false);
-        setIsPaused(false);
+    try {
+      console.log("Starting voice interaction process...");
+      hideTooltips();
+      
+      // First, ensure a complete cleanup of any existing resources
+      // But don't set isVoicePopupOpen to false yet, as we're about to open it
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.currentTime =.0;
+        if (currentAudioRef.current.src) {
+          URL.revokeObjectURL(currentAudioRef.current.src);
+        }
+        currentAudioRef.current = null;
       }
-    } else {
+
+      // Reset voice-related states except isVoicePopupOpen
       setIsPlayingLastMessage(false);
       setIsPaused(false);
+      setIsRecording(false);
+      setIsTranscribing(false);
+      
+      // Clean up any ongoing recording
+      if (mediaRecorderRef.current) {
+        try {
+          if (mediaRecorderRef.current.state === 'recording') {
+            mediaRecorderRef.current.stop();
+          }
+          mediaRecorderRef.current = null;
+        } catch (error) {
+          console.error('Error stopping mediaRecorder:', error);
+        }
+      }
+
+      // Clean up audio stream
+      if (audioStreamRef.current) {
+        try {
+          audioStreamRef.current.getTracks().forEach(track => track.stop());
+          audioStreamRef.current = null;
+        } catch (error) {
+          console.error('Error stopping audio tracks:', error);
+        }
+      }
+
+      // Clear any stored audio chunks
+      audioChunksRef.current = [];
+      audioStartTimeRef.current = 0;
+
+      // Get the last AI message
+      const lastAiMessage = messages
+        .slice()
+        .reverse()
+        .find(msg => msg.role === 'assistant');
+
+      if (lastAiMessage) {
+        try {
+          console.log("Starting voice interaction sequence");
+          
+          // 1. First step: Set AI as active and open popup BEFORE any async operations
+          setIsPreparingVoiceAudio(true);
+          setIsVoicePopupOpen(true);
+          
+          // 2. Prepare audio in the background
+          console.log("Preparing AI speech...");
+          const response = await openai.audio.speech.create({
+            model: "tts-1",
+            voice: selectedVoice,
+            input: lastAiMessage.content
+          });
+
+          const audioData = await response.blob();
+          const url = URL.createObjectURL(audioData);
+          
+          // 3. Create and set up the audio with proper handlers
+          console.log("Setting up audio playback...");
+          const audio = new Audio(url);
+          
+          // Set up all event handlers BEFORE assigning to currentAudioRef
+          audio.oncanplay = () => {
+            console.log("Audio ready to play");
+            setIsPreparingVoiceAudio(false);
+            setIsPlayingLastMessage(true);
+          };
+          
+          audio.onended = () => {
+            console.log("AI finished speaking");
+            URL.revokeObjectURL(url);
+            setIsPlayingLastMessage(false);
+            setIsPaused(false);
+            setIsPreparingVoiceAudio(false);
+            
+            // No automatic actions after AI finishes speaking
+            // User needs to manually press the record button
+          };
+          
+          audio.onerror = (e) => {
+            console.error('Error during audio playback:', e);
+            URL.revokeObjectURL(url);
+            setIsPreparingVoiceAudio(false);
+            setIsPlayingLastMessage(false);
+            setIsPaused(false);
+          };
+          
+          // 4. Now assign to ref and play
+          currentAudioRef.current = audio;
+          
+          try {
+            console.log("Starting AI speech playback");
+            await audio.play();
+          } catch (playError) {
+            console.error('Error playing audio:', playError);
+            setIsPreparingVoiceAudio(false);
+            setIsPlayingLastMessage(false);
+            handleVoicePopupClose();
+          }
+        } catch (error) {
+          console.error('Error in voice interaction sequence:', error);
+          handleVoicePopupClose();
+        }
+      } else {
+        alert(t('noAIMessageToRead'));
+      }
+    } catch (error) {
+      console.error('Error initializing voice interaction:', error);
+      handleVoicePopupClose();
+    }
+  };
+  
+  // Add separated functions for starting and stopping recording
+  const handleStartRecording = async () => {
+    try {
+      console.log("Starting recording...");
+      // Only proceed if we're not already recording
+      if (isRecording) {
+        console.warn('Already recording');
+        return;
+      }
+      
+      // Stop any previous media recorder and audio stream
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        console.log('Stopping existing recorder before starting new one');
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current = null;
+      }
+      
+      if (audioStreamRef.current) {
+        console.log('Stopping existing audio tracks before starting new ones');
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        audioStreamRef.current = null;
+      }
+      
+      // Clear any previous audio chunks
+      audioChunksRef.current = [];
+      
+      // Get fresh audio stream
+      console.log('Requesting microphone access...');
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+      
+      // Create new MediaRecorder
+      console.log('Creating new MediaRecorder...');
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      
+      // Set up event handlers
+      mediaRecorder.ondataavailable = (event) => {
+        console.log('Audio data available');
+        audioChunksRef.current.push(event.data);
+      };
+      
+      mediaRecorder.onstart = () => {
+        console.log('Recording started successfully');
+        setIsRecording(true);
+      };
+      
+      mediaRecorder.onerror = (error) => {
+        console.error('MediaRecorder error:', error);
+        setIsRecording(false);
+        
+        // Clean up on error
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach(track => track.stop());
+          audioStreamRef.current = null;
+        }
+      };
+      
+      mediaRecorder.onstop = async () => {
+        console.log('Recording stopped, processing audio...');
+        setIsRecording(false);
+        setIsTranscribing(true);
+        
+        try {
+          // Process the recorded audio
+          if (audioChunksRef.current.length === 0) {
+            console.warn('No audio data recorded');
+            setIsTranscribing(false);
+            return;
+          }
+          
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+          audioChunksRef.current = [];
+          
+          // Send audio to Whisper API
+          const formData = new FormData();
+          formData.append('file', audioBlob, 'audio.wav');
+          formData.append('model', 'whisper-1');
+          formData.append('response_format', 'json');
+          
+          console.log('Sending audio to Whisper API...');
+          const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+            },
+            body: formData
+          });
+          
+          if (!response.ok) {
+            throw new Error('Transcription failed');
+          }
+          
+          const data = await response.json();
+          const transcript = data.text;
+          console.log('Transcription received:', transcript);
+          
+          if (transcript.trim()) {
+            // Add user message to chat
+            const userMessage = {
+              role: 'user',
+              content: transcript,
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, userMessage]);
+            
+            // Check if the transcribed message contains contact information
+            const contactInfo = detectContactInfo(transcript);
+    
+            // If contact info is detected and we haven't processed it yet
+            if (contactInfo && contactInfo.hasContactInfo && !contactInfoDetected && !emailSent) {
+              console.log('Contact information detected:', contactInfo);
+              setContactInfoDetected(true);
+              // Process in background while the conversation continues
+              sendContactEmail(contactInfo).catch(error => 
+                console.error('Error in background contact processing:', error)
+              );
+            }
+            
+            // Get AI response
+            console.log('Getting AI response...');
+            const aiResponse = await openai.chat.completions.create({
+              model: "gpt-4",
+              messages: [
+                {
+                  role: "system",
+                  content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nImportant: You MUST detect and respond in the EXACT SAME language as the user's message. DO NOT translate anything. If the user speaks in Portuguese, you MUST respond in Portuguese. If they speak in Spanish, respond in Spanish. If in English, respond in English. Never translate to English.\nAlso important: Actively ask for the user's contact information (email and/or phone) during the conversation in a natural way.`
+                },
+                ...messages.concat(userMessage).map(msg => ({
+                  role: msg.role,
+                  content: msg.content
+                }))
+              ],
+              temperature: 0.7,
+              max_tokens: 1000
+            });
+            
+            const assistantMessage = {
+              role: 'assistant',
+              content: aiResponse.choices[0].message.content,
+              timestamp: new Date()
+            };
+            
+            // Add AI response to chat
+            setMessages(prev => [...prev, assistantMessage]);
+            
+            // Play the AI response
+            setIsPreparingVoiceAudio(true);
+            
+            const ttsResponse = await openai.audio.speech.create({
+              model: "tts-1",
+              voice: selectedVoice,
+              input: assistantMessage.content
+            });
+            
+            const audioData = await ttsResponse.blob();
+            const url = URL.createObjectURL(audioData);
+            const audio = new Audio(url);
+            
+            // Clear any existing audio
+            if (currentAudioRef.current) {
+              currentAudioRef.current.pause();
+              if (currentAudioRef.current.src) {
+                URL.revokeObjectURL(currentAudioRef.current.src);
+              }
+            }
+            
+            // Set up event handlers
+            audio.oncanplay = () => {
+              setIsPreparingVoiceAudio(false);
+              setIsPlayingLastMessage(true);
+            };
+            
+            audio.onended = () => {
+              URL.revokeObjectURL(url);
+              setIsPlayingLastMessage(false);
+              setIsPaused(false);
+              setIsPreparingVoiceAudio(false);
+            };
+            
+            audio.onerror = () => {
+              console.error('Error during AI response audio playback');
+              URL.revokeObjectURL(url);
+              setIsPreparingVoiceAudio(false);
+              setIsPlayingLastMessage(false);
+              setIsPaused(false);
+            };
+            
+            // Play the audio
+            currentAudioRef.current = audio;
+            await audio.play();
+          }
+        } catch (error) {
+          console.error('Error processing recording:', error);
+          alert(t('errorTranscribeAudio'));
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+      
+      // Start recording
+      mediaRecorder.start(1000);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      setIsRecording(false);
+      alert(t('errorStartRecording'));
+    }
+  };
+  
+  const handleStopRecording = () => {
+    try {
+      console.log("Stopping recording...");
+      
+      // Only try to stop if we're actually recording
+      if (!isRecording) {
+        console.warn('Not currently recording');
+        return;
+      }
+      
+      if (mediaRecorderRef.current) {
+        if (mediaRecorderRef.current.state === 'recording') {
+          console.log('Stopping active MediaRecorder');
+          mediaRecorderRef.current.stop();
+        } else {
+          console.log('MediaRecorder not in recording state:', mediaRecorderRef.current.state);
+          setIsRecording(false);
+        }
+      } else {
+        console.warn('No MediaRecorder available');
+        // Reset the recording state if there's no recorder
+        setIsRecording(false);
+      }
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+      // Make sure to reset the recording state on error
+      setIsRecording(false);
+      
+      // Also clean up any streams that might be open
+      if (audioStreamRef.current) {
+        try {
+          audioStreamRef.current.getTracks().forEach(track => track.stop());
+          audioStreamRef.current = null;
+        } catch (streamError) {
+          console.error('Error stopping audio tracks:', streamError);
+        }
+      }
     }
   };
 
@@ -1527,7 +1720,7 @@ function Chat() {
         messages: [
           {
             role: "system",
-            content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}`
+            content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}\nImportant: Actively ask for the user's contact information (email and/or phone) during the conversation in a natural way.`
           },
           ...messages.concat(userMessage).map(msg => ({
             role: msg.role,
@@ -1558,6 +1751,188 @@ function Chat() {
     }
   };
 
+  const handleSpeak = (content) => {
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    } else {
+      const utterance = new SpeechSynthesisUtterance(content);
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // Function to detect contact information in a message
+  const detectContactInfo = (message) => {
+    if (contactInfoDetected || emailSent) return null;
+    
+    const content = message.trim();
+    
+    // More comprehensive phone number patterns
+    // Covers international formats, local formats, with/without country codes
+    // Handles various separators like spaces, dashes, periods, parentheses
+    const phonePattern = /(?:(?:\+|00)(?:[1-9]\d{0,3}))?[-.\s]?\(?(?:\d{1,4})\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}/g;
+    
+    // More comprehensive email pattern
+    // Handles most valid email formats, including international domains
+    const emailPattern = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+    
+    // Check for common ways people introduce their contact information
+    const contactPhrases = [
+      /my (phone|number|contact|cell|mobile|telephone) (is|:) ?([\+\d\s\-\(\)\.]{7,})/i,
+      /you can (call|reach|contact) me at ?([\+\d\s\-\(\)\.]{7,})/i,
+      /my email (is|address is|:) ?([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/i,
+      /you can email me at ?([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/i,
+      /here'?s my (email|contact|phone|number): ?(.+)/i
+    ];
+
+    // Direct matches using patterns
+    let detectedPhones = content.match(phonePattern) || [];
+    let detectedEmails = content.match(emailPattern) || [];
+    
+    // Extract from phrases
+    for (const phrase of contactPhrases) {
+      const match = content.match(phrase);
+      if (match) {
+        if (match[0].toLowerCase().includes('email') || match[0].includes('@')) {
+          const potentialEmail = match[0].match(emailPattern);
+          if (potentialEmail && !detectedEmails.includes(potentialEmail[0])) {
+            detectedEmails.push(potentialEmail[0]);
+          }
+        } else {
+          const potentialPhone = match[0].match(phonePattern);
+          if (potentialPhone && !detectedPhones.includes(potentialPhone[0])) {
+            detectedPhones.push(potentialPhone[0]);
+          }
+        }
+      }
+    }
+    
+    // Clean up detected phone numbers to remove duplicates and invalid formats
+    detectedPhones = detectedPhones
+      .filter(phone => phone && phone.replace(/[^\d]/g, '').length >= 7) // At least 7 digits
+      .filter((phone, index, self) => self.indexOf(phone) === index); // Remove duplicates
+    
+    // Clean up detected emails to remove duplicates
+    detectedEmails = detectedEmails
+      .filter((email, index, self) => self.indexOf(email) === index); // Remove duplicates
+    
+    console.log('Detection results:', { detectedPhones, detectedEmails });
+    
+    const contactInfo = {
+      hasContactInfo: !!(detectedPhones.length > 0 || detectedEmails.length > 0),
+      phones: detectedPhones,
+      emails: detectedEmails
+    };
+    
+    return contactInfo;
+  };
+  
+  // Function to format conversation for email
+  const formatConversationForEmail = async (messages, userName, userEmail, userPhone) => {
+    try {
+      // Use GPT to format the conversation in a nice way
+      const response = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful assistant that formats conversation data for an email. Format the content in a clear, readable way with proper sections for user details and conversation history."
+          },
+          {
+            role: "user",
+            content: `Please format the following conversation for an email to our team:
+            
+USER DETAILS:
+Name: ${userName || "Unknown"}
+Email: ${userEmail || "Not provided"}
+Phone: ${userPhone || "Not provided"}
+
+CONVERSATION HISTORY:
+${messages.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`).join('\n\n')}`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+      });
+      
+      return response.choices[0].message.content;
+    } catch (error) {
+      console.error('Error formatting conversation:', error);
+      
+      // Fallback to simple format if GPT fails
+      return `
+USER DETAILS:
+Name: ${userName || "Unknown"}
+Email: ${userEmail || "Not provided"}
+Phone: ${userPhone || "Not provided"}
+
+CONVERSATION HISTORY:
+${messages.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`).join('\n\n')}
+      `;
+    }
+  };
+  
+  // Function to send the email with conversation information
+  const sendContactEmail = async (detectedContacts) => {
+    if (emailSent) return;
+    
+    try {
+      setIsLoading(true);
+      
+      // Get the user's name from storage
+      const userName = localStorage.getItem('userName') || localStorage.getItem('name') || userEmail?.split('@')[0] || 'Unknown User';
+      
+      // If a phone number was detected in the message, save it
+      if (detectedContacts.phones.length > 0) {
+        setUserPhone(detectedContacts.phones[0]);
+      }
+      
+      // Format the conversation for email
+      const emailContent = await formatConversationForEmail(
+        messages, 
+        userName, 
+        userEmail, 
+        detectedContacts.phones[0] || userPhone
+      );
+      
+      // Get the email service URL from environment variables
+      const emailServiceUrl = 'http://localhost:8000/api/send-email';
+      console.log('Sending email via', emailServiceUrl);
+      console.log('User details:', { userName, userEmail, userPhone });
+      
+      const response = await fetch(emailServiceUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: 'leandro.justino@dengun.com',
+          subject: `New Contact Information from Chat: ${userName}`,
+          content: emailContent,
+          userName,
+          userEmail,
+          userPhone: detectedContacts.phones[0] || userPhone
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Email sent successfully:', data);
+        setEmailSent(true);
+      } else {
+        const errorData = await response.text();
+        console.error('Failed to send email:', errorData);
+        throw new Error(`Failed to send email: ${response.status} ${errorData}`);
+      }
+    } catch (error) {
+      console.error('Error sending contact email:', error);
+      // Still mark as processed even if there's an error
+      // This prevents multiple attempts with the same contact info
+      setEmailSent(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (isInitializing) {
     return <LoadingScreen />;
   }
@@ -1582,7 +1957,7 @@ function Chat() {
           </button>
         </div>
 
-        <div className="chat-messages">
+        <div className="chat-messages" ref={messagesContainerRef}>
           {messages.map((message, index) => (
             <div
               key={index}
@@ -1656,15 +2031,6 @@ function Chat() {
         </div>
 
         <form onSubmit={handleSubmit} className="chat-input-container">
-          {showSuggestedMessages && (
-            <button 
-              type="button" // Add type="button" to prevent form submission
-              className="suggested-messages-button"
-              onClick={handleSuggestedMessagesClick}
-            >
-              {t('suggestedMessages')}
-            </button>
-          )}
           <div className="chat-input-wrapper">
             <div className="emoji-picker-container" ref={emojiPickerRef}>
               <button 
@@ -1694,6 +2060,15 @@ function Chat() {
                 </div>
               )}
             </div>
+            {showSuggestedMessages && (
+              <button 
+                type="button"
+                className="suggested-messages-button"
+                onClick={handleSuggestedMessagesClick}
+              >
+                {t('suggestedMessages')}
+              </button>
+            )}
             <input
               ref={inputRef}
               type="text"
@@ -1706,16 +2081,24 @@ function Chat() {
             />
             <button 
               type="button" 
-              className="message-action-button"
+              className={`message-action-button ${isLoading || isPlayingLastMessage || isPreparingVoiceAudio ? 'opacity-50 cursor-not-allowed' : ''}`}
               onClick={handleMicClick}
-              title={t('startVoiceChat')}
-              disabled={isLoading || isPlayingLastMessage}
+              title={isLoading || isPlayingLastMessage || isPreparingVoiceAudio ? t('voiceBusy') : t('startVoiceChat')}
+              disabled={isLoading || isPlayingLastMessage || isPreparingVoiceAudio}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                <line x1="12" y1="19" x2="12" y2="22"/>
-              </svg>
+              {isPreparingVoiceAudio ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="22"/>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="22"/>
+                </svg>
+              )}
             </button>
             <button
               type="submit"
@@ -1728,6 +2111,10 @@ function Chat() {
             </button>
           </div>
         </form>
+
+        <div className="chat-disclaimer">
+          {t('disclaimer')}
+        </div>
       </div>
       <Settings 
         isOpen={isSettingsOpen}
@@ -1749,6 +2136,7 @@ function Chat() {
         isOpen={isVoicePopupOpen}
         onClose={handleVoicePopupClose}
         isPlayingLastMessage={isPlayingLastMessage}
+        isPreparingVoiceAudio={isPreparingVoiceAudio}
         isRecording={isRecording}
         isTranscribing={isTranscribing}
         onStopRecording={handleStopRecording}

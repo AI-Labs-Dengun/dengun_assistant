@@ -28,8 +28,10 @@ function Auth() {
         return
       }
 
-      // Store email in localStorage for session management
+      // Get user data and store in localStorage
+      const userData = querySnapshot.docs[0].data();
       localStorage.setItem('userEmail', email)
+      localStorage.setItem('userName', userData.name)
       
       navigate('/chat')
     } catch (err) {

@@ -1,0 +1,13 @@
+{
+  "name": "send-email-function",
+  "version": "1.0.0",
+  "description": "Cloud function to send emails with user contact information",
+  "main": "index.js",
+  "engines": {
+    "node": "18"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.10",
+    "cors": "^2.8.5"
+  }
+} 
