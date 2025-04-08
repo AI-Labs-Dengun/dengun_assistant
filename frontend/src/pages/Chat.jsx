@@ -1286,6 +1286,7 @@ function Chat() {
 
     try {
       console.log("Starting voice interaction process...");
+      hideTooltips();
       
       // First, ensure a complete cleanup of any existing resources
       // But don't set isVoicePopupOpen to false yet, as we're about to open it

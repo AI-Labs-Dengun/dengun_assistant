@@ -247,7 +247,7 @@
   }
 
   .chat-input-container {
-    padding: 16px;
+    padding: 8px;
     width: 100%;
     max-width: 768px;
     margin: 0 auto;
@@ -726,6 +726,7 @@
   @media (max-width: 640px) {
     .chat-container {
       max-width: 100%;
+      height: 100vh;
     }
 
     .chat-input-container,
@@ -738,12 +739,13 @@
     }
 
     .chat-input-container {
-      padding: 12px;
+      padding: 0 12px;
     }
 
     .chat-input-wrapper {
       padding: 6px;
       gap: 4px;
+      margin-top: 0;
     }
 
     .chat-input {
@@ -755,6 +757,10 @@
       width: 28px;
       height: 28px;
       padding: 2px;
+    }
+
+    .chat-messages {
+      padding: 0.5rem;
     }
   }
 
