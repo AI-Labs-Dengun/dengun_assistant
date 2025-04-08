@@ -8,7 +8,7 @@ const openai = new OpenAI({
 });
 
 function Settings({ isOpen, onClose, onThemeChange, onVoiceChange, selectedVoice }) {
-  const { t } = useTranslation();
+  const { t, currentLanguage, setCurrentLanguage } = useTranslation();
   const audioRef = useRef(null);
   
   if (!isOpen) return null;
@@ -73,6 +73,19 @@ function Settings({ isOpen, onClose, onThemeChange, onVoiceChange, selectedVoice
     { id: 'shimmer', name: 'Shimmer' }
   ];
 
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'pt', name: 'Português' },
+    { code: 'es', name: 'Español' },
+    { code: 'fr', name: 'Français' },
+    { code: 'de', name: 'Deutsch' },
+    { code: 'it', name: 'Italiano' },
+    { code: 'zh', name: '中文' },
+    { code: 'hi', name: 'हिन्दी' },
+    { code: 'ru', name: 'Русский' },
+    { code: 'ja', name: '日本語' }
+  ];
+
   return (
     <div className="settings-overlay">
       <div className="settings-panel">
@@ -87,6 +100,21 @@ function Settings({ isOpen, onClose, onThemeChange, onVoiceChange, selectedVoice
               <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
+        </div>
+
+        <div className="settings-section">
+          <h3 className="settings-section-title">Language</h3>
+          <div className="settings-options settings-language-options">
+            {languages.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => setCurrentLanguage(lang.code)}
+                className={`settings-option ${currentLanguage === lang.code ? 'selected' : ''}`}
+              >
+                {lang.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="settings-section">

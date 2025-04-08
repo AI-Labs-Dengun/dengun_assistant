@@ -1,0 +1,46 @@
+.settings-language-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.settings-language-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.settings-language-options::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.settings-language-options::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.settings-language-options::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.settings-language-options .settings-option {
+  width: 100%;
+  text-align: center;
+  padding: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.settings-language-options .settings-option:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.settings-language-options .settings-option.selected {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: #3b82f6;
+  color: #3b82f6;
+} 

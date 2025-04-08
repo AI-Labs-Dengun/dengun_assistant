@@ -645,8 +645,26 @@
   }
 
   .status-text-animated {
-    animation: bounce 1.5s ease-in-out infinite;
-    display: inline-block;
+    @apply inline-block;
+  }
+  
+  .status-text-animated.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 
   .voice-popup h3 {

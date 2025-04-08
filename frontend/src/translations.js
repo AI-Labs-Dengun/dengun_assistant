@@ -21,6 +21,8 @@ export const translations = {
     searchEmoji: 'Search emoji...',
     startVoiceChat: 'Start Voice Chat',
     playAudio: 'Play Audio',
+    stopAudio: 'Stop Audio',
+    preparingAudio: 'Preparing Audio...',
 
     // Voice Interaction
     voiceChat: 'Voice Chat',
@@ -102,6 +104,9 @@ export const translations = {
     // Suggested Messages
     suggestedMessages: 'Suggested Messages',
 
+    // Disclaimer
+    disclaimer: 'This is an AI assistant. Please verify any important information.',
+
   },
   pt: {
     // Chat UI
@@ -125,6 +130,8 @@ export const translations = {
     searchEmoji: 'Pesquisar emoji...',
     startVoiceChat: 'Iniciar Chat por Voz',
     playAudio: 'Reproduzir Áudio',
+    stopAudio: 'Parar Áudio',
+    preparingAudio: 'Preparando Áudio...',
 
     // Voice Interaction
     voiceChat: 'Chat por Voz',
@@ -205,6 +212,9 @@ export const translations = {
     // Suggested Messages
     suggestedMessages: 'Mensagens Sugeridas',
 
+    // Disclaimer
+    disclaimer: 'Este é um assistente de IA. Por favor, verifique qualquer informação importante que seja fornecida.',
+
   },
   es: {
     // Chat UI
@@ -228,6 +238,8 @@ export const translations = {
     searchEmoji: 'Buscar emoji...',
     startVoiceChat: 'Iniciar Chat por Voz',
     playAudio: 'Reproducir Audio',
+    stopAudio: 'Detener Audio',
+    preparingAudio: 'Preparando Audio...',
 
     // Voice Interaction
     voiceChat: 'Chat por Voz',
@@ -308,6 +320,9 @@ export const translations = {
     // Suggested Messages
     suggestedMessages: 'Mensajes Sugeridos',
 
+    // Disclaimer
+    disclaimer: 'Este es un asistente de IA. Por favor, verifica cualquier información importante.',
+
   },
   fr: {
     // Chat UI
@@ -331,6 +346,8 @@ export const translations = {
     searchEmoji: 'Rechercher un emoji...',
     startVoiceChat: 'Démarrer le chat vocal',
     playAudio: "Lire l'audio",
+    stopAudio: 'Arrêter l\'audio',
+    preparingAudio: 'Préparant l\'audio...',
 
     // Voice Interaction
     voiceChat: 'Chat Vocal',
@@ -410,6 +427,9 @@ export const translations = {
     // Suggested Messages
     suggestedMessages: 'Messages Suggérés',
 
+    // Disclaimer
+    disclaimer: 'Ceci est un assistant IA. Veuillez vérifier toute information importante.',
+
   },
   de: {
     // Chat UI
@@ -433,6 +453,8 @@ export const translations = {
     searchEmoji: 'Emoji suchen...',
     startVoiceChat: 'SprachChat starten',
     playAudio: 'Audio abspielen',
+    stopAudio: 'Audio stoppen',
+    preparingAudio: 'Audio vorbereiten...',
 
     // Voice Interaction
     voiceChat: 'SprachChat',
@@ -512,6 +534,9 @@ export const translations = {
     // Suggested Messages
     suggestedMessages: 'Vorgeschlagene Nachrichten',
 
+    // Disclaimer
+    disclaimer: 'Dies ist ein KI-Assistent. Bitte überprüfen Sie alle wichtigen Informationen.',
+
   },
   it: {
     // Chat UI
@@ -535,6 +560,8 @@ export const translations = {
     searchEmoji: 'Cerca emoji...',
     startVoiceChat: 'Avvia chat vocale',
     playAudio: 'Riproduci audio',
+    stopAudio: 'Interrompi audio',
+    preparingAudio: 'Preparando audio...',
 
     // Voice Interaction
     voiceChat: 'Chat Vocale',
@@ -614,6 +641,9 @@ export const translations = {
     // Suggested Messages
     suggestedMessages: 'Messaggi Suggeriti',
 
+    // Disclaimer
+    disclaimer: 'Questo è un assistente IA. Si prega di verificare qualsiasi informazione importante.',
+
   },
   zh: {
     // Chat UI
@@ -637,6 +667,8 @@ export const translations = {
     searchEmoji: '搜索表情...',
     startVoiceChat: '开始语音聊天',
     playAudio: '播放音频',
+    stopAudio: '停止音频',
+    preparingAudio: '准备音频...',
 
     // Voice Interaction
     voiceChat: '语音聊天',
@@ -716,6 +748,9 @@ export const translations = {
     // Suggested Messages
     suggestedMessages: '建议消息',
 
+    // Disclaimer
+    disclaimer: '这是一个AI助手。请验证任何重要信息。',
+
   },
   hi: {
     // Chat UI
@@ -739,6 +774,8 @@ export const translations = {
     searchEmoji: 'इमोजी खोजें...',
     startVoiceChat: 'वॉइस चैट शुरू करें',
     playAudio: 'ऑडियो चलाएं',
+    stopAudio: 'ऑडियो रोकें',
+    preparingAudio: 'ऑडियो तैयार कर रहा है...',
 
     // Voice Interaction
     voiceChat: 'वॉइस चैट',
@@ -820,6 +857,9 @@ export const translations = {
     // Suggested Messages
     suggestedMessages: 'सुझाए गए संदेश',
 
+    // Disclaimer
+    disclaimer: 'यह एक AI सहायक है। कृपया किसी भी महत्वपूर्ण जानकारी को सत्यापित करें।',
+
   },
   ru: {
     // Chat UI
@@ -843,6 +883,8 @@ export const translations = {
     searchEmoji: 'Поиск эмодзи...',
     startVoiceChat: 'Начать голосовой чат',
     playAudio: 'Воспроизвести аудио',
+    stopAudio: 'Остановить аудио',
+    preparingAudio: 'Подготовка аудио...',
 
     // Voice Interaction
     voiceChat: 'Голосовой чат',
@@ -922,6 +964,9 @@ export const translations = {
     // Suggested Messages
     suggestedMessages: 'Предложенные сообщения',
 
+    // Disclaimer
+    disclaimer: 'Это ИИ-ассистент. Пожалуйста, проверяйте любую важную информацию.',
+
   },
   ja: {
     // Chat UI
@@ -945,6 +990,8 @@ export const translations = {
     searchEmoji: '絵文字を検索...',
     startVoiceChat: '音声チャットを開始',
     playAudio: '音声を再生',
+    stopAudio: '音声を停止',
+    preparingAudio: '音声を準備中...',
 
     // Voice Interaction
     voiceChat: '音声チャット',
@@ -1025,6 +1072,9 @@ export const translations = {
 
     // Suggested Messages
     suggestedMessages: 'おすすめメッセージ',
+
+    // Disclaimer
+    disclaimer: 'これはAIアシスタントです。重要な情報は必ず確認してください。',
 
   }
 }; 
