@@ -57,7 +57,7 @@
   }
 
   .glass-panel {
-    @apply w-full max-w-md p-8 rounded-2xl backdrop-blur-sm bg-white/10 shadow-xl;
+    @apply w-full max-w-md p-8 rounded-2xl backdrop-blur-sm bg-white/10 shadow-xl mx-4;
   }
 
   .gradient-button {
@@ -761,6 +761,21 @@
 
     .chat-messages {
       padding: 0.5rem;
+    }
+
+    .glass-panel {
+      @apply p-6 mx-4;
+    }
+    
+    .gradient-background {
+      @apply px-0;
+    }
+
+    .chat-disclaimer {
+      padding: 0;
+      margin-top: 8px;
+      background: transparent;
+      border: none;
     }
   }
 
