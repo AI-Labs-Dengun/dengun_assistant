@@ -764,7 +764,9 @@
     }
 
     .glass-panel {
-      @apply p-6 mx-4;
+      margin-left: 1rem;
+      margin-right: 1rem;
+      padding: 1.0rem;
     }
     
     .gradient-background {
@@ -773,7 +775,7 @@
 
     .chat-disclaimer {
       padding: 0;
-      margin-top: 8px;
+      margin-top: 0;
       background: transparent;
       border: none;
     }
