@@ -770,6 +770,13 @@
     .gradient-background {
       @apply px-0;
     }
+
+    .chat-disclaimer {
+      padding: 0;
+      margin-top: 8px;
+      background: transparent;
+      border: none;
+    }
   }
 
   .suggested-messages-button {
