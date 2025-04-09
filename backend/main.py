@@ -4,28 +4,43 @@ from dotenv import load_dotenv
 import os
 import openai
 from flask_mail import Mail, Message
+import logging # Add logging
 
 # Load environment variables from .env file
 load_dotenv()
 
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+
 app = Flask(__name__)
 CORS(app)
+
+# Configure logging for Flask app
+app.logger.setLevel(logging.INFO)
 
 # Get OpenAI API key from environment variable
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 if not OPENAI_API_KEY:
-    raise ValueError("OpenAI API key not found. Please set OPENAI_API_KEY in .env file")
+    # Log error instead of raising immediately to allow app to potentially start
+    app.logger.error("OpenAI API key not found. Please set OPENAI_API_KEY environment variable.")
+    # Consider how to handle this - maybe disable OpenAI features? For now, just log.
+else:
+    openai.api_key = OPENAI_API_KEY
+    app.logger.info("OpenAI API key configured.")
 
-# Configure OpenAI
-openai.api_key = OPENAI_API_KEY
+# Email configuration from Environment Variables
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'Dengun Assistant <ai@dengun.com>')
 
-# Email configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'ai@dengun.com'
-app.config['MAIL_PASSWORD'] = 'hrnp phmk dsft wpbz'
-app.config['MAIL_DEFAULT_SENDER'] = 'Dengun Assistant <ai@dengun.com>'
+# Log if mail credentials are missing
+if not app.config['MAIL_USERNAME']:
+    app.logger.warning("MAIL_USERNAME environment variable not set. Email sending may fail.")
+if not app.config['MAIL_PASSWORD']:
+    app.logger.warning("MAIL_PASSWORD environment variable not set. Email sending may fail.")
 
 mail = Mail(app)
 

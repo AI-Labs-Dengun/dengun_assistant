@@ -868,30 +868,30 @@ function Chat() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!inputMessage.trim() || isLoading) return;
-    
+    const trimmedMessage = inputMessage.trim();
+    if (!trimmedMessage || isLoading) return;
+
     setShowSuggestedMessages(false);
-    setIsLoading(true);
     
     const userMessage = {
+      id: `user-${Date.now()}-${Math.random()}`, // Add unique ID
       role: 'user',
-      content: inputMessage.trim(),
+      content: trimmedMessage,
       timestamp: new Date()
     };
 
-    setInputMessage('');
-    setIsLoading(true);
+    // Add user message IMMEDIATELY to the state
+    setMessages(prev => [...prev, userMessage]); 
+    setInputMessage(''); // Clear input after adding message
+    setIsLoading(true); // Set loading AFTER adding user message
 
-    // Check if the message contains contact information
+    // Check for contact info
     const contactInfo = detectContactInfo(userMessage.content);
-    
-    // If contact info is detected and we haven't processed it yet
-    if (contactInfo && contactInfo.hasContactInfo && !contactInfoDetected && !emailSent) {
-      console.log('Contact information detected:', contactInfo);
-      setContactInfoDetected(true);
-      // Process in background while the conversation continues
+    if (contactInfo?.hasContactInfo && !emailSent) {
+      console.log('Contact information detected in handleSubmit:', contactInfo);
+      setContactInfoDetected(true); 
       sendContactEmail(contactInfo).catch(error => 
-        console.error('Error in background contact processing:', error)
+        console.error('Error in background contact processing (handleSubmit):', error)
       );
     }
 
@@ -901,12 +901,10 @@ function Chat() {
         messages: [
           {
             role: "system",
-            content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}\nImportant: Actively ask for the user's contact information (email and/or phone) during the conversation in a natural way.`
+            content: `Instructions: ${instructions}\\nKnowledge Base: ${knowledge}\\nLanguage: ${userLanguage}\\nImportant: Actively ask for the user's contact information (email and/or phone) during the conversation in a natural way.`
           },
-          ...messages.concat(userMessage).map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }))
+          // Map only necessary fields for the API call
+          ...messages.map(msg => ({ role: msg.role, content: msg.content })).concat({ role: userMessage.role, content: userMessage.content }) 
         ],
         temperature: 0.7,
         max_tokens: 1000
@@ -914,18 +912,23 @@ function Chat() {
 
       if (response.choices[0]?.message?.content) {
         const assistantMessage = {
+          id: `asst-${Date.now()}-${Math.random()}`, // Add unique ID
           role: 'assistant',
           content: response.choices[0].message.content.trim(),
           timestamp: new Date()
         };
         setMessages(prev => [...prev, assistantMessage]);
+      } else {
+         throw new Error("No content in response"); 
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error calling OpenAI API in handleSubmit:', error);
       const errorMessage = {
+        id: `err-${Date.now()}-${Math.random()}`, // Add unique ID
         role: 'assistant',
         content: t('errorTryAgain'),
-        timestamp: new Date()
+        timestamp: new Date(),
+        isError: true // Add flag for potential styling
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -1698,19 +1701,17 @@ function Chat() {
   };
 
   const handleTooltipClick = async (tooltipText) => {
-    setInputMessage(tooltipText);
-    hideTooltips(); // Hide tooltips when user clicks one
+    hideTooltips(); 
     
-    // Create a user message object
     const userMessage = {
+      id: `user-${Date.now()}-${Math.random()}`, // Add unique ID
       role: 'user',
       content: tooltipText.trim(),
       timestamp: new Date()
     };
 
-    // Add user message to chat
+    // Add user message IMMEDIATELY
     setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
     setIsLoading(true);
 
     try {
@@ -1719,34 +1720,50 @@ function Chat() {
         messages: [
           {
             role: "system",
-            content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}\nImportant: Actively ask for the user's contact information (email and/or phone) during the conversation in a natural way.`
+            content: `Instructions: ${instructions}\\nKnowledge Base: ${knowledge}\\nLanguage: ${userLanguage}\\nImportant: Actively ask for the user's contact information (email and/or phone) during the conversation in a natural way.`
           },
-          ...messages.concat(userMessage).map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }))
+           // Map only necessary fields for the API call
+          ...messages.map(msg => ({ role: msg.role, content: msg.content })).concat({ role: userMessage.role, content: userMessage.content })
         ],
         temperature: 0.7,
         max_tokens: 1000
       });
 
-      const assistantMessage = {
-        role: 'assistant',
-        content: response.choices[0].message.content,
-        timestamp: new Date()
-      };
+      if (response.choices[0]?.message?.content) {
+          const assistantMessage = {
+            id: `asst-${Date.now()}-${Math.random()}`, // Add unique ID
+            role: 'assistant',
+            content: response.choices[0].message.content.trim(),
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, assistantMessage]);
 
-      setMessages(prev => [...prev, assistantMessage]);
+          // Detect contact info in the AI response AFTER adding it
+          const contactInfo = detectContactInfo(assistantMessage.content);
+           if (contactInfo?.hasContactInfo && !emailSent) {
+              console.log('Contact information detected in assistant response (handleTooltipClick):', contactInfo);
+              setContactInfoDetected(true); 
+              sendContactEmail(contactInfo).catch(error => 
+                console.error('Error in background contact processing (handleTooltipClick):', error)
+              );
+           }
+      } else {
+         throw new Error("No content in response");
+      }
+
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error calling OpenAI API in handleTooltipClick:', error);
       const errorMessage = {
+        id: `err-${Date.now()}-${Math.random()}`, // Add unique ID
         role: 'assistant',
-        content: t('errorTryAgain'),
-        timestamp: new Date()
+        content: t('errorApiResponse'), 
+        timestamp: new Date(),
+        isError: true, 
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      // Input message state is not used here, so no need to clear it
     }
   };
 
@@ -1872,31 +1889,41 @@ ${messages.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.cont
   
   // Function to send the email with conversation information
   const sendContactEmail = async (detectedContacts) => {
-    if (emailSent) return;
+    // Prevent duplicate sends more robustly
+    if (emailSent) {
+        console.log("Email sending skipped: already sent or in progress.");
+        return; 
+    }
     
+    // Indicate sending attempt immediately
+    setEmailSent(true); 
+    console.log("Attempting to send contact email...");
+
+    // Keep isLoading specific to AI response, maybe add a specific email sending state if needed
+    // setIsLoading(true); // Avoid using the main loading state for this background task
+
     try {
-      setIsLoading(true);
-      
       // Get the user's name from storage
       const userName = localStorage.getItem('userName') || localStorage.getItem('name') || userEmail?.split('@')[0] || 'Unknown User';
       
-      // If a phone number was detected in the message, save it
+      // Prepare user details (get latest phone if detected)
+      const latestUserPhone = detectedContacts.phones.length > 0 ? detectedContacts.phones[0] : userPhone;
       if (detectedContacts.phones.length > 0) {
-        setUserPhone(detectedContacts.phones[0]);
+        setUserPhone(latestUserPhone); // Update state if needed
       }
       
-      // Format the conversation for email
+      // Format the conversation for email (using the current messages state)
       const emailContent = await formatConversationForEmail(
         messages, 
         userName, 
         userEmail, 
-        detectedContacts.phones[0] || userPhone
+        latestUserPhone 
       );
       
-      // Get the email service URL from environment variables
-      const emailServiceUrl = 'http://localhost:8000/api/send-email';
-      console.log('Sending email via', emailServiceUrl);
-      console.log('User details:', { userName, userEmail, userPhone });
+      // FORCE using the absolute path for the email service
+      const emailServiceUrl = 'https://assistant-backend-staging.eba-xxmsewym.eu-west-1.elasticbeanstalk.com/api/send-email'; 
+      console.log('Sending email via absolute URL:', emailServiceUrl);
+      console.log('User details for email:', { userName, userEmail, userPhone: latestUserPhone }); // Log actual phone used
       
       const response = await fetch(emailServiceUrl, {
         method: 'POST',
@@ -1904,31 +1931,31 @@ ${messages.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.cont
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          to: 'leandro.justino@dengun.com',
+          to: 'ai@dengun.com', 
           subject: `New Contact Information from Chat: ${userName}`,
-          content: emailContent,
+          content: emailContent, // Send the formatted content
           userName,
           userEmail,
-          userPhone: detectedContacts.phones[0] || userPhone
+          userPhone: latestUserPhone // Ensure correct phone is sent
         }),
       });
       
       if (response.ok) {
         const data = await response.json();
         console.log('Email sent successfully:', data);
-        setEmailSent(true);
+        // setEmailSent(true); // Already set at the start
       } else {
         const errorData = await response.text();
-        console.error('Failed to send email:', errorData);
+        console.error('Failed to send email:', response.status, errorData);
+        setEmailSent(false); // Reset flag on failure to allow retry? Or keep true? Decide policy. Keeping true for now to prevent spam.
         throw new Error(`Failed to send email: ${response.status} ${errorData}`);
       }
     } catch (error) {
-      console.error('Error sending contact email:', error);
-      // Still mark as processed even if there's an error
-      // This prevents multiple attempts with the same contact info
-      setEmailSent(true);
+      console.error('Error during sendContactEmail execution:', error);
+      setEmailSent(false); // Reset flag on failure? Decide policy. Keeping true for now.
     } finally {
-      setIsLoading(false);
+       // setIsLoading(false); // Don't tie email sending to main loading indicator
+       console.log("sendContactEmail finished.");
     }
   };
 
@@ -1959,8 +1986,9 @@ ${messages.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.cont
         <div className="chat-messages" ref={messagesContainerRef}>
           {messages.map((message, index) => (
             <div
-              key={index}
-              className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}
+              // Use a more stable key if possible, adding id helps
+              key={message.id || `msg-${index}`} 
+              className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'} ${message.isError ? 'error-message' : ''}`}
             >
               <div className="message-avatar">
                 {message.role === 'user' ? (
@@ -1974,55 +2002,42 @@ ${messages.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.cont
                 )}
               </div>
               <div className="message-bubble">
+                { /* Ensure user messages render directly */ }
                 {message.role === 'user' ? (
                   <div className="message-content">
-                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                     {/* Use ReactMarkdown for user messages too if they might contain markdown */}
+                    <ReactMarkdown>{message.content || ''}</ReactMarkdown>
                   </div>
                 ) : (
                   <div className="message-content">
                     <TypewriterText 
-                      key={`message-${index}`}
-                      text={message.content || ''}
+                      // Use a unique key for TypewriterText as well
+                      key={`typewriter-${message.id || index}`} 
+                      text={message.content || ''} 
                       speed={30}
                       onComplete={() => {
-                        // You can add any completion logic here if needed
+                        // Check if autoscroll is needed AFTER typewriter completes
+                         if (messagesContainerRef.current) {
+                            const { scrollHeight, clientHeight, scrollTop } = messagesContainerRef.current;
+                            // Only scroll if near the bottom already or just completed
+                            if (scrollHeight - clientHeight <= scrollTop + 100) { 
+                              scrollToBottom();
+                            }
+                          }
                       }}
                     />
                   </div>
                 )}
-                <MessageActions message={message} index={index} />
-                <div className="message-timestamp">
-                  {formatDistanceToNow(message.timestamp, { 
-                    addSuffix: true,
-                    includeSeconds: true,
-                    locale: {
-                      formatDistance: (token, count) => {
-                        const translations = {
-                          lessThanXSeconds: t('justNow'),
-                          xSeconds: t('justNow'),
-                          halfAMinute: t('justNow'),
-                          lessThanXMinutes: `${count} ${t('minutes')} ${t('ago')}`,
-                          xMinutes: `${count} ${t('minutes')} ${t('ago')}`,
-                          aboutXHours: `${count} ${t('hours')} ${t('ago')}`,
-                          xHours: `${count} ${t('hours')} ${t('ago')}`,
-                          xDays: `${count} ${t('days')} ${t('ago')}`,
-                          aboutXWeeks: `${count} ${t('weeks')} ${t('ago')}`,
-                          xWeeks: `${count} ${t('weeks')} ${t('ago')}`,
-                          aboutXMonths: `${count} ${t('months')} ${t('ago')}`,
-                          xMonths: `${count} ${t('months')} ${t('ago')}`,
-                          aboutXYears: `${count} ${t('years')} ${t('ago')}`,
-                          xYears: `${count} ${t('years')} ${t('ago')}`,
-                          overXYears: `${count} ${t('years')} ${t('ago')}`,
-                          almostXYears: `${count} ${t('years')} ${t('ago')}`
-                        };
-                        return translations[token] || '';
-                      }
-                    }
-                  })}
-                </div>
+                { /* Render actions only for assistant messages */ }
+                {message.role === 'assistant' && !message.isError && <MessageActions message={message} index={index} /> }
+                 {/* Display timestamp consistently */}
+                 <div className="message-timestamp">
+                   {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
+                 </div>
               </div>
             </div>
           ))}
+          {/* Loading indicator */}
           {isLoading && (
             <div className="message assistant-message">
               <div className="message-avatar">
@@ -2039,6 +2054,7 @@ ${messages.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.cont
               </div>
             </div>
           )}
+          {/* Ref for scrolling */}
           <div ref={messagesEndRef} />
         </div>
 
