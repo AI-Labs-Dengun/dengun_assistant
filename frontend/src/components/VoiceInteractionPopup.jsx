@@ -1,12 +1,13 @@
 import React from 'react';
-import robot2Icon from '../assets/robot2.png';
-import user2Icon from '../assets/user2.png';
+import robot2Icon from '../assets/robot.png';
+import user2Icon from '../assets/user.png';
 import { useTranslation } from '../hooks/useTranslation';
 
 const VoiceInteractionPopup = ({
   isOpen,
   onClose,
   isPlayingLastMessage,
+  isPreparingVoiceAudio,
   isRecording,
   isTranscribing,
   onStopRecording,
@@ -20,8 +21,11 @@ const VoiceInteractionPopup = ({
   if (!isOpen) return null;
 
   // Determine who is currently active
-  const isAISpeaking = isPlayingLastMessage;
+  const isAIActive = isPlayingLastMessage || isPreparingVoiceAudio;
   const isUserActive = isRecording || isTranscribing;
+  
+  // Only allow user interaction when AI is not active
+  const canUserInteract = !isAIActive;
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
@@ -40,8 +44,8 @@ const VoiceInteractionPopup = ({
         </div>
 
         <div className="voice-status-container">
-          {/* Show AI Speaking Status only when AI is active */}
-          {isAISpeaking && (
+          {/* Show AI Speaking Status when AI is active */}
+          {isAIActive && (
             <div className="voice-status active">
               <div className="voice-status-icon">
                 <img 
@@ -53,8 +57,9 @@ const VoiceInteractionPopup = ({
               <div className="voice-status-text">
                 <h4>{t('assistant')}</h4>
                 <p>
-                  <span className="status-text-animated">
-                    {isPaused ? t('paused') : t('speaking')}
+                  <span className={`status-text-animated ${isPreparingVoiceAudio ? 'loading' : ''}`}>
+                    {isPreparingVoiceAudio ? t('preparingAudio') : 
+                     isPaused ? t('paused') : t('speaking')}
                   </span>
                 </p>
               </div>
@@ -63,7 +68,11 @@ const VoiceInteractionPopup = ({
                 disabled={!isPlayingLastMessage}
                 className="ml-auto text-white/80 hover:text-white transition-colors"
               >
-                {isPaused ? (
+                {isPreparingVoiceAudio ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                  </svg>
+                ) : isPaused ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
                     <path d="M8 5v14l11-7z"/>
                   </svg>
@@ -76,8 +85,8 @@ const VoiceInteractionPopup = ({
             </div>
           )}
 
-          {/* Show User Speaking Status only when user is active or neither is active */}
-          {(!isAISpeaking) && (
+          {/* Show User Speaking Status only when it's the user's turn */}
+          {canUserInteract && (
             <div className={`voice-status ${isUserActive ? 'active' : ''}`}>
               <div className="voice-status-icon">
                 <img 
@@ -98,7 +107,7 @@ const VoiceInteractionPopup = ({
               </div>
               <button
                 onClick={isRecording ? onStopRecording : onStartRecording}
-                disabled={isAISpeaking}
+                disabled={isAIActive}
                 className="ml-auto text-white/80 hover:text-white transition-colors"
               >
                 {isRecording ? (

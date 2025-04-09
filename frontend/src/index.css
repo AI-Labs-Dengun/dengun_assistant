@@ -57,7 +57,7 @@
   }
 
   .glass-panel {
-    @apply w-full max-w-md p-8 rounded-2xl backdrop-blur-sm bg-white/10 shadow-xl;
+    @apply w-full max-w-md p-8 rounded-2xl backdrop-blur-sm bg-white/10 shadow-xl mx-4;
   }
 
   .gradient-button {
@@ -247,7 +247,7 @@
   }
 
   .chat-input-container {
-    padding: 16px;
+    padding: 8px;
     width: 100%;
     max-width: 768px;
     margin: 0 auto;
@@ -645,8 +645,26 @@
   }
 
   .status-text-animated {
-    animation: bounce 1.5s ease-in-out infinite;
-    display: inline-block;
+    @apply inline-block;
+  }
+  
+  .status-text-animated.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 
   .voice-popup h3 {
@@ -708,6 +726,7 @@
   @media (max-width: 640px) {
     .chat-container {
       max-width: 100%;
+      height: 100vh;
     }
 
     .chat-input-container,
@@ -720,12 +739,13 @@
     }
 
     .chat-input-container {
-      padding: 12px;
+      padding: 0 12px;
     }
 
     .chat-input-wrapper {
       padding: 6px;
       gap: 4px;
+      margin-top: 0;
     }
 
     .chat-input {
@@ -737,6 +757,27 @@
       width: 28px;
       height: 28px;
       padding: 2px;
+    }
+
+    .chat-messages {
+      padding: 0.5rem;
+    }
+
+    .glass-panel {
+      margin-left: 1rem;
+      margin-right: 1rem;
+      padding: 1.0rem;
+    }
+    
+    .gradient-background {
+      @apply px-0;
+    }
+
+    .chat-disclaimer {
+      padding: 0;
+      margin-top: 0;
+      background: transparent;
+      border: none;
     }
   }
 

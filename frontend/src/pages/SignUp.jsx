@@ -52,8 +52,9 @@ function SignUp() {
       // Store the user data
       await setDoc(doc(db, 'users', tempUserId), userData)
       
-      // Store email in localStorage for session management
+      // Store user info in localStorage for session management
       localStorage.setItem('userEmail', email)
+      localStorage.setItem('userName', name)
       
       // Navigate to chat
       navigate('/chat')
