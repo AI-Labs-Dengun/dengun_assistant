@@ -8,6 +8,7 @@ import Settings from '../components/Settings';
 import CommentModal from '../components/CommentModal';
 import LoadingScreen from '../components/LoadingScreen';
 import VoiceInteractionPopup from '../components/VoiceInteractionPopup';
+import TypewriterText from '../components/TypewriterText';
 import { useTranslation } from '../hooks/useTranslation';
 import robotIcon from '../assets/robot.png';
 import userIcon from '../assets/user.png';
@@ -941,20 +942,20 @@ function Chat() {
         messages: [
           {
             role: "system",
-            content: `Instructions: ${instructions}\nLanguage: ${langCode}\nImportant: Respond in the same language as the user's language (${langCode}). If the user's language is Portuguese, respond in Portuguese.`
+            content: `You are a professional AI assistant for Dengun. Provide a brief welcome message in ${langCode}. Keep it concise and professional. If the language is Portuguese, respond in Portuguese.`
           },
           {
             role: "user",
-            content: "Say hello and welcome the user to the chat."
+            content: "Welcome the user and briefly explain how you can help with their digital presence."
           }
         ],
         temperature: 0.7,
-        max_tokens: 100
+        max_tokens: 150
       });
+      
       return response.choices[0].message.content;
     } catch (error) {
       console.error('Error getting welcome message:', error);
-      // Silently fall back to English without showing any error message
       return t('welcome');
     }
   };
@@ -971,8 +972,8 @@ function Chat() {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
     
-    // Hide the suggested messages button when user sends a message
     setShowSuggestedMessages(false);
+    setIsLoading(true);
     
     const userMessage = {
       role: 'user',
@@ -980,9 +981,8 @@ function Chat() {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
-    setIsLoading(true);
+    setMessages(prev => [...prev, userMessage]);
 
     try {
       const response = await openai.chat.completions.create({
@@ -990,25 +990,23 @@ function Chat() {
         messages: [
           {
             role: "system",
-            content: `Instructions: ${instructions}\nKnowledge Base: ${knowledge}\nLanguage: ${userLanguage}`
+            content: `${instructions}\n${knowledge}\nRespond in the same language as the user.`
           },
-          ...messages.concat(userMessage).map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }))
+          ...messages,
+          userMessage
         ],
         temperature: 0.7,
         max_tokens: 1000
       });
 
-      const assistantMessage = {
-        role: 'assistant',
-        content: response.choices[0].message.content,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-      return assistantMessage;
+      if (response.choices[0]?.message?.content) {
+        const assistantMessage = {
+          role: 'assistant',
+          content: response.choices[0].message.content.trim(),
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      }
     } catch (error) {
       console.error('Error:', error);
       const errorMessage = {
@@ -1017,7 +1015,6 @@ function Chat() {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
-      return errorMessage;
     } finally {
       setIsLoading(false);
     }
@@ -1600,9 +1597,22 @@ function Chat() {
                 )}
               </div>
               <div className="message-bubble">
-                <div className="message-content">
-                  <ReactMarkdown>{message.content}</ReactMarkdown>
-                </div>
+                {message.role === 'user' ? (
+                  <div className="message-content">
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <div className="message-content">
+                    <TypewriterText 
+                      key={`message-${index}`}
+                      text={message.content || ''}
+                      speed={30}
+                      onComplete={() => {
+                        // You can add any completion logic here if needed
+                      }}
+                    />
+                  </div>
+                )}
                 <MessageActions message={message} index={index} />
                 <div className="message-timestamp">
                   {formatDistanceToNow(message.timestamp, { 
