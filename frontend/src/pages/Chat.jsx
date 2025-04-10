@@ -1899,9 +1899,6 @@ ${messages.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.cont
     setEmailSent(true); 
     console.log("Attempting to send contact email...");
 
-    // Keep isLoading specific to AI response, maybe add a specific email sending state if needed
-    // setIsLoading(true); // Avoid using the main loading state for this background task
-
     try {
       // Get the user's name from storage
       const userName = localStorage.getItem('userName') || localStorage.getItem('name') || userEmail?.split('@')[0] || 'Unknown User';
@@ -1920,10 +1917,16 @@ ${messages.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.cont
         latestUserPhone 
       );
       
-      // FORCE using the absolute path for the email service
-      const emailServiceUrl = 'https://assistant-backend-staging.eba-xxmsewym.eu-west-1.elasticbeanstalk.com/api/send-email'; 
-      console.log('Sending email via absolute URL:', emailServiceUrl);
-      console.log('User details for email:', { userName, userEmail, userPhone: latestUserPhone }); // Log actual phone used
+      // Use environment variable for the API base URL
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || ''; // Fallback to empty string if not set
+      const emailServiceUrl = `${apiUrl}/api/send-email`; 
+      console.log('Sending email via constructed URL:', emailServiceUrl);
+      console.log('User details for email:', { userName, userEmail, userPhone: latestUserPhone });
+      
+      if (!apiUrl) {
+        console.error("VITE_API_BASE_URL is not defined. Cannot send email.");
+        throw new Error("API base URL is not configured.");
+      }
       
       const response = await fetch(emailServiceUrl, {
         method: 'POST',
@@ -1947,14 +1950,13 @@ ${messages.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.cont
       } else {
         const errorData = await response.text();
         console.error('Failed to send email:', response.status, errorData);
-        setEmailSent(false); // Reset flag on failure to allow retry? Or keep true? Decide policy. Keeping true for now to prevent spam.
+        setEmailSent(false); // Reset flag on failure 
         throw new Error(`Failed to send email: ${response.status} ${errorData}`);
       }
     } catch (error) {
       console.error('Error during sendContactEmail execution:', error);
-      setEmailSent(false); // Reset flag on failure? Decide policy. Keeping true for now.
+      setEmailSent(false); // Reset flag on failure
     } finally {
-       // setIsLoading(false); // Don't tie email sending to main loading indicator
        console.log("sendContactEmail finished.");
     }
   };
